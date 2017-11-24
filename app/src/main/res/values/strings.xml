@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">JYFridge</string>
-    <string name="app_id">59f92c56</string>
+    <string name="app_id">5a17be57</string>
 
     <!-- 请替换成在语音云官网申请的appid -->
     <string name="example_explain">本示例为讯飞语音Android平台开发者提供语音听写、语法识别、语义理解和语音合成等代码样例，旨在让用户能够依据该示例快速开发出基于语音接口的应用程序。</string>

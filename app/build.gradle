@@ -22,6 +22,13 @@ android {
     }
 }
 
+allprojects {
+    repositories {
+        maven { url 'http://raw.github.com/saki4510t/libcommon/master/repository/' }
+        maven { url 'https://jitpack.io' }
+    }
+}
+
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
@@ -30,7 +37,9 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
-    implementation files('libs/Msc.jar')
     implementation files('libs/signwaymanager.jar')
-    implementation files('libs/Sunflower.jar')
+}
+
+repositories {
+    mavenCentral()
 }

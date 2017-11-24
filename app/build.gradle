@@ -31,7 +31,6 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
     implementation files('libs/Msc.jar')
-    implementation files('libs/netty-all-4.1.6.Final.jar')
     implementation files('libs/signwaymanager.jar')
     implementation files('libs/Sunflower.jar')
 }

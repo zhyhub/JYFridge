@@ -1,12 +1,9 @@
 package smartlink.zhy.jyfridge.service
 
 import android.accessibilityservice.AccessibilityService
-import android.app.Activity
 import android.content.Intent
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Environment
-import android.support.v4.media.session.PlaybackStateCompat
 import android.text.TextUtils
 import android.util.Log
 import android.view.KeyEvent

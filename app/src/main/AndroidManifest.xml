@@ -52,8 +52,6 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".utils.VoiceSettings"/>
-
         <meta-data
             android:name="IFLYTEK_APPKEY"
             android:value="'5a17be57'" />

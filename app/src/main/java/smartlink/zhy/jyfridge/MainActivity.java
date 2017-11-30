@@ -1,6 +1,9 @@
 package smartlink.zhy.jyfridge;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -10,7 +13,11 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
+import java.io.IOException;
 
+import okhttp3.Call;
+import smartlink.zhy.jyfridge.utils.BaseCallBack;
+import smartlink.zhy.jyfridge.utils.BaseOkHttpClient;
 import smartlink.zhy.jyfridge.utils.L;
 
 /**
@@ -30,10 +37,49 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private float timestamp;
     float dT;
 
+    private MainReceiver mainReceiver;
+
+    private void sendMsg(String txt){
+        BaseOkHttpClient.newBuilder()
+                .addParam("q",txt)
+                .addParam("app_key",ConstantPool.APP_KEY)
+                .addParam("user_id","123456")
+                .get()
+                .url(ConstantPool.BASE_RUYI+"v1/message")
+                .build().enqueue(new BaseCallBack() {
+            @Override
+            public void onSuccess(Object o) {
+                L.e(TAG,"onSuccess" + o.toString());
+
+            }
+
+            @Override
+            public void onError(int code) {
+                L.e(TAG,"onError");
+            }
+
+            @Override
+            public void onFailure(Call call, IOException e) {
+                L.e(TAG,"onFailure");
+            }
+        });
+    }
+
+    private class MainReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String txt = intent.getStringExtra("txt");
+            L.e(TAG, "MainActivity MainReceiver 收到广播了 ++" + txt);
+            sendMsg(txt);
+        }
+    }
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mainReceiver = new MainReceiver();
+        registerReceiver(mainReceiver, new IntentFilter("smartlink.zhy.jyfridge.service"));
     }
 
     @Override
@@ -44,6 +90,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         degree_Y = 0;
         degree_Z = 0;
         sm = (SensorManager) getSystemService(SENSOR_SERVICE);
+        assert sm != null;
         mGyroscope = sm.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
         if (mGyroscope == null) {
             Toast.makeText(this, "您的设备不支持陀螺仪！", Toast.LENGTH_SHORT).show();
@@ -87,10 +134,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
             timestamp = event.timestamp;
 
-            L.i(TAG + "axis_x_degree=" + String.valueOf(180 * degree_X / Math.PI));
-            L.i(TAG + "axis_y_degree=" + String.valueOf(180 * degree_Y / Math.PI));
-            L.i(TAG + "axis_z_degree=" + String.valueOf(180 * degree_Z / Math.PI));
-
             if (180 * degree_X / Math.PI > 40  && 180 * degree_X / Math.PI < 50) {
                 startActivity(new Intent(MainActivity.this,USBCameraActivity.class));
             }
@@ -106,6 +149,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     protected void onDestroy() {
         super.onDestroy();
         sm.unregisterListener(this);
+        unregisterReceiver(mainReceiver);
         L.e(TAG, "onDestroy");
 
     }

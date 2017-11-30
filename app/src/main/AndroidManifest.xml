@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:actionandroid="http://schemas.android.com/apk/res-auto"
     package="smartlink.zhy.jyfridge">
 
     <!--连接网络权限，用于执行云端语音能力 -->

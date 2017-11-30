@@ -4,6 +4,7 @@ import android.accessibilityservice.AccessibilityService;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
 
@@ -27,6 +28,7 @@ import java.util.LinkedHashMap;
 import smartlink.zhy.jyfridge.R;
 import smartlink.zhy.jyfridge.json.JsonParser;
 import smartlink.zhy.jyfridge.utils.L;
+import smartlink.zhy.jyfridge.utils.OkHttpUtils;
 
 /**
  * 唤醒android板   调用讯飞语音
@@ -213,10 +215,10 @@ public class VoiceService extends AccessibilityService {
         @Override
         public void onResult(RecognizerResult results, boolean isLast) {
             L.d(TAG, results.getResultString());
-            printResult(results);
             if (isLast) {
                 // TODO 最后的结果
                 L.e(TAG, results.getResultString());
+                printResult(results);
             }
         }
 
@@ -248,6 +250,12 @@ public class VoiceService extends AccessibilityService {
             resultBuffer.append(mIatResults.get(key));
         }
         L.e(TAG, "TAG   printResult " + resultBuffer.toString());
+
+        Intent test = new Intent();
+        test.setAction("smartlink.zhy.jyfridge.service");
+        test.putExtra("txt", resultBuffer.toString());
+        sendBroadcast(test);
+        Log.e(TAG, "VoiceService  广播发送了" + resultBuffer.toString());
     }
 
     /**

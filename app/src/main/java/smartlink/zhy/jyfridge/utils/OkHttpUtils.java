@@ -2,7 +2,6 @@ package smartlink.zhy.jyfridge.utils;
 
 import android.os.Handler;
 import android.os.Looper;
-import android.support.annotation.NonNull;
 
 import com.google.gson.Gson;
 import com.google.gson.internal.$Gson$Types;
@@ -28,6 +27,7 @@ import okhttp3.Response;
 import okio.BufferedSink;
 
 /**
+ * Created by lijin on 2016/7/26.
  * okhttp封装类
  */
 public class OkHttpUtils {
@@ -54,6 +54,8 @@ public class OkHttpUtils {
 
     /**
      * 单例模式
+     *
+     * @return
      */
     public static OkHttpUtils getInstance() {
         if (mInstance == null) {
@@ -69,16 +71,19 @@ public class OkHttpUtils {
 
     /**
      * 开启异步线程访问网络
+     *
+     * @param request
+     * @param callback
      */
     public void enqueue(Request request, final RequestCallBack callback) {
         mOkHttpClient.newCall(request).enqueue(new Callback() {
             @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+            public void onFailure(Call call, IOException e) {
                 sendFailedStringCallback(call, e, callback);
             }
 
             @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+            public void onResponse(Call call, Response response) throws IOException {
                 try {
                     final String string = response.body().string();
                     if (callback.mType == String.class) {
@@ -87,7 +92,9 @@ public class OkHttpUtils {
                         Object o = mGson.fromJson(string, callback.mType);//解析返回数据
                         sendSuccessResultCallback(o, callback);
                     }
-                } catch (IOException | com.google.gson.JsonParseException e) {
+                } catch (IOException e) {
+                    sendFailedStringCallback(call, e, callback);
+                } catch (com.google.gson.JsonParseException e) {//Json解析的错误
                     sendFailedStringCallback(call, e, callback);
                 }
             }
@@ -96,16 +103,18 @@ public class OkHttpUtils {
 
     /**
      * 开启异步线程访问网络, 且不在意返回结果（实现空callback）
+     *
+     * @param request
      */
     public void enqueue(Request request) {
         mOkHttpClient.newCall(request).enqueue(new Callback() {
             @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+            public void onFailure(Call call, IOException e) {
 
             }
 
             @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+            public void onResponse(Call call, Response response) throws IOException {
 
             }
         });
@@ -123,18 +132,26 @@ public class OkHttpUtils {
         //非阻塞式访问，请求加入调度
         call.enqueue(new Callback() {
             @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+            public void onFailure(Call call, IOException e) {
 
             }
 
             @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+            public void onResponse(Call call, Response response) throws IOException {
+                //String htmlStr =  response.body().string();
+                //byte[] resultBytes = response.body().bytes();
+                //InputStream inputStream = response.body().byteStream();
             }
         });
+//        阻塞式访问
+//        Response response = call.execute();
     }
 
     /**
      * 下载文件
+     *
+     * @param url
+     * @throws Exception
      */
     public void getForAsynchronization(String url) {
         Request request = new Request.Builder()
@@ -142,12 +159,12 @@ public class OkHttpUtils {
                 .build();
         mOkHttpClient.newCall(request).enqueue(new Callback() {
             @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+            public void onFailure(Call call, IOException e) {
 
             }
 
             @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+            public void onResponse(Call call, Response response) throws IOException {
                 if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
                 Headers responseHeaders = response.headers();
                 for (int i = 0; i < responseHeaders.size(); i++) {
@@ -160,6 +177,8 @@ public class OkHttpUtils {
 
     /**
      * 下载文件  --对外暴露的接口
+     *
+     * @param url
      */
     public static void getFile(String url) {
         getInstance().getForAsynchronization(url);
@@ -167,6 +186,11 @@ public class OkHttpUtils {
 
     /**
      * 以post方式提交json数据
+     *
+     * @param url
+     * @param json
+     * @param callback
+     * @throws IOException
      */
     public void postForJsonAsynchronization(String url, String json, RequestCallBack callback) {
         Request request = buildPostRequest(url, json);
@@ -176,6 +200,12 @@ public class OkHttpUtils {
 
     /**
      * Post方式提交表单数据
+     *
+     * @param url
+     * @param map
+     * @param callback
+     * @return
+     * @throws IOException
      */
     public void postForMapAsynchronization(String url, Map<String, Object> map, RequestCallBack callback) {
         Request request = buildPostRequest(url, map);
@@ -186,6 +216,11 @@ public class OkHttpUtils {
 
     /**
      * 以post方式提交string数据
+     *
+     * @param url
+     * @param str
+     * @param callback
+     * @throws Exception
      */
     public static void postStringForAsynchronization(String url, String str, RequestCallBack callback) {
         Request request = new Request.Builder()
@@ -197,6 +232,11 @@ public class OkHttpUtils {
 
     /**
      * 以post方式提交Byte数据
+     *
+     * @param url
+     * @param str
+     * @param callback
+     * @throws Exception
      */
     public static void postByteForAsynchronization(String url, final String str, RequestCallBack callback) {
         RequestBody requestBody = new RequestBody() {
@@ -206,7 +246,7 @@ public class OkHttpUtils {
             }
 
             @Override
-            public void writeTo(@NonNull BufferedSink sink) throws IOException {
+            public void writeTo(BufferedSink sink) throws IOException {
                 sink.writeUtf8(str);
                 for (int i = 2; i <= 997; i++) {
                     sink.writeUtf8(String.format(str, i, factor(i)));
@@ -234,6 +274,12 @@ public class OkHttpUtils {
 
     /**
      * 分块请求
+     *
+     * @param url
+     * @param json
+     * @param filePath
+     * @param callback
+     * @throws Exception
      */
     public void postMultipartForAsynchronization(String url, String json, final String filePath, RequestCallBack callback) {
         RequestBody requestBody = new MultipartBody.Builder()
@@ -255,6 +301,8 @@ public class OkHttpUtils {
 
     /**
      * 回掉接口
+     *
+     * @param <T>
      */
     public static abstract class RequestCallBack<T> {
         Type mType;
@@ -279,6 +327,10 @@ public class OkHttpUtils {
 
     /**
      * 请求错误
+     *
+     * @param call
+     * @param e
+     * @param callback
      */
     private void sendFailedStringCallback(final Call call, final Exception e, final RequestCallBack callback) {
         mDelivery.post(new Runnable() {
@@ -292,6 +344,9 @@ public class OkHttpUtils {
 
     /**
      * 请求成功
+     *
+     * @param object
+     * @param callback
      */
     private void sendSuccessResultCallback(final Object object, final RequestCallBack callback) {
         mDelivery.post(new Runnable() {
@@ -306,6 +361,10 @@ public class OkHttpUtils {
 
     /**
      * 组装Request
+     *
+     * @param url
+     * @param object
+     * @return
      */
     private Request buildPostRequest(String url, Object object) {
         String token = "";
@@ -369,6 +428,7 @@ public class OkHttpUtils {
         String key;
         Object value;
     }
+
 
     private Param[] map2Params(Map<String, Object> params) {
         if (params == null) return new Param[0];

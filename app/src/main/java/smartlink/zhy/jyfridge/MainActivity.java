@@ -13,9 +13,13 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+
 import java.io.IOException;
+import java.util.Map;
 
 import okhttp3.Call;
+import smartlink.zhy.jyfridge.bean.BaseEntity;
 import smartlink.zhy.jyfridge.utils.BaseCallBack;
 import smartlink.zhy.jyfridge.utils.BaseOkHttpClient;
 import smartlink.zhy.jyfridge.utils.L;
@@ -24,7 +28,7 @@ import smartlink.zhy.jyfridge.utils.L;
  * 陀螺仪达到一定度数后自动跳转到拍照界面
  */
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener{
+public class MainActivity extends AppCompatActivity implements SensorEventListener {
     private static final String TAG = MainActivity.class.getSimpleName();
     private SensorManager sm;
     private Sensor mGyroscope;
@@ -39,28 +43,34 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private MainReceiver mainReceiver;
 
-    private void sendMsg(String txt){
+    private void sendMsg(String txt) {
         BaseOkHttpClient.newBuilder()
-                .addParam("q",txt)
-                .addParam("app_key",ConstantPool.APP_KEY)
-                .addParam("user_id","123456")
+                .addParam("q", txt)
+                .addParam("app_key", ConstantPool.APP_KEY)
+                .addParam("user_id", "123456")
                 .get()
-                .url(ConstantPool.BASE_RUYI+"v1/message")
+                .url(ConstantPool.BASE_RUYI + "v1/message")
                 .build().enqueue(new BaseCallBack() {
             @Override
             public void onSuccess(Object o) {
-                L.e(TAG,"onSuccess" + o.toString());
-
+                L.e(TAG, "onSuccess" + o.toString());
+                Gson gson = new Gson();
+                BaseEntity entity = gson.fromJson(o.toString(),BaseEntity.class);
+                Map<String,Object> map = entity.getResult().getIntents().get(0).getParameters();
+                for (String key:map.keySet()){                        //遍历取出key，再遍历map取出value。
+                    L.e(TAG,"key  " + key);
+                    L.e(TAG,"map.get(key).toString()  " + map.get(key).toString());
+                }
             }
 
             @Override
             public void onError(int code) {
-                L.e(TAG,"onError");
+                L.e(TAG, "onError");
             }
 
             @Override
             public void onFailure(Call call, IOException e) {
-                L.e(TAG,"onFailure");
+                L.e(TAG, "onFailure");
             }
         });
     }
@@ -134,8 +144,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
             timestamp = event.timestamp;
 
-            if (180 * degree_X / Math.PI > 40  && 180 * degree_X / Math.PI < 50) {
-                startActivity(new Intent(MainActivity.this,USBCameraActivity.class));
+            if (180 * degree_X / Math.PI > 40 && 180 * degree_X / Math.PI < 50) {
+                startActivity(new Intent(MainActivity.this, USBCameraActivity.class));
             }
         }
     }

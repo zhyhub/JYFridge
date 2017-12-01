@@ -6,8 +6,8 @@ package smartlink.zhy.jyfridge;
 
 public class ConstantPool {
 
-    static final String BASE_RUYI = "http://api.ruyi.ai/";
-    static final String APP_KEY = "a0927149-bfd5-40cc-824e-a110b0847c6e";
+    public static final String BASE_RUYI = "http://api.ruyi.ai/";
+    public static final String APP_KEY = "a0927149-bfd5-40cc-824e-a110b0847c6e";
 
     public static final byte Zero = 0x00;
     public static final byte Default = 10;

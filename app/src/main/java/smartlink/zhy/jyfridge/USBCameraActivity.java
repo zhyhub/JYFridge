@@ -1,5 +1,7 @@
 package smartlink.zhy.jyfridge;
 
+import android.app.Fragment;
+import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -16,6 +18,8 @@ import com.serenegiant.usb.CameraDialog;
 import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.usb.common.AbstractUVCCameraHandler;
 import com.serenegiant.usb.widget.CameraViewInterface;
+
+import java.io.File;
 
 import smartlink.zhy.jyfridge.utils.L;
 
@@ -44,7 +48,6 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
     private static final float NS2S = 1.0f / 1000000000.0f;
     private float timestamp;
     float dT;
-
 
     /**
      * USB设备事件监听器
@@ -96,6 +99,8 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_usbcamera);
+
+
 
         mTextureView = (View)findViewById(R.id.camera_view);
         mUVCCameraView = (CameraViewInterface) mTextureView;
@@ -251,4 +256,6 @@ public class USBCameraActivity extends AppCompatActivity implements CameraDialog
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
     }
+
+
 }

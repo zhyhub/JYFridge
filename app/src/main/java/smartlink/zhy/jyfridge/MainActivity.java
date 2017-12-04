@@ -1,5 +1,6 @@
 package smartlink.zhy.jyfridge;
 
+import android.app.Fragment;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -11,24 +12,34 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
 import okhttp3.Call;
 import smartlink.zhy.jyfridge.bean.BaseEntity;
+import smartlink.zhy.jyfridge.fragment.CameraFragment0;
+import smartlink.zhy.jyfridge.fragment.CameraFragment1;
+import smartlink.zhy.jyfridge.fragment.CameraFragment2;
+import smartlink.zhy.jyfridge.fragment.CameraFragment3;
 import smartlink.zhy.jyfridge.utils.BaseCallBack;
 import smartlink.zhy.jyfridge.utils.BaseOkHttpClient;
 import smartlink.zhy.jyfridge.utils.L;
+import smartlink.zhy.jyfridge.utils.PreViewSize;
 
 /**
  * 陀螺仪达到一定度数后自动跳转到拍照界面
  */
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener {
+public class MainActivity extends AppCompatActivity implements SensorEventListener{
     private static final String TAG = MainActivity.class.getSimpleName();
     private SensorManager sm;
     private Sensor mGyroscope;
@@ -42,6 +53,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     float dT;
 
     private MainReceiver mainReceiver;
+
+    protected Context mContext;
+    Fragment cameraFragment0,cameraFragment1,cameraFragment2,cameraFragment3;
+    boolean[] flag = new boolean[4];
+    public static final int PREVIEWWIDTH = 640;
+    public static final int PREVIEWHEIGHT = 480;
+    CheckBox mCheckBox0, mCheckBox1, mCheckBox2, mCheckBox3;
+    Button open;
 
     private void sendMsg(String txt) {
         BaseOkHttpClient.newBuilder()
@@ -90,6 +109,46 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setContentView(R.layout.activity_main);
         mainReceiver = new MainReceiver();
         registerReceiver(mainReceiver, new IntentFilter("smartlink.zhy.jyfridge.service"));
+
+        File f = new File("/sdcard/png/");
+        if(!f.exists()){
+            f.mkdirs();
+        }
+        open = findViewById(R.id.open);
+        mCheckBox0 = (CheckBox) findViewById(R.id.open0);
+        mCheckBox1 = (CheckBox) findViewById(R.id.open1);
+        mCheckBox2 = (CheckBox) findViewById(R.id.open2);
+        mCheckBox3 = (CheckBox) findViewById(R.id.open3);
+        mCheckBox0.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                flag[0] = true;
+            }
+        });
+        mCheckBox1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                flag[1] = true;
+            }
+        });
+        mCheckBox2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                flag[2] = true;
+            }
+        });
+        mCheckBox3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                flag[3] = true;
+            }
+        });
+        open.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setFragment();
+            }
+        });
     }
 
     @Override
@@ -144,9 +203,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
             timestamp = event.timestamp;
 
-            if (180 * degree_X / Math.PI > 40 && 180 * degree_X / Math.PI < 50) {
-                startActivity(new Intent(MainActivity.this, USBCameraActivity.class));
-            }
+//            if (180 * degree_X / Math.PI > 40 && 180 * degree_X / Math.PI < 50) {
+//                startActivity(new Intent(MainActivity.this, USBCameraActivity.class));
+//            }
         }
     }
 
@@ -178,5 +237,63 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
+    }
+
+    protected void setFragment() {
+        if(flag[0]){
+            cameraFragment0 = CameraFragment0.newInstance(new PreViewSize(PREVIEWWIDTH, PREVIEWHEIGHT));
+            getFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.frame0, cameraFragment0)
+                    .commit();
+        } else {
+            if(cameraFragment0!=null) {
+                getFragmentManager()
+                        .beginTransaction().remove(cameraFragment0).commit();
+                cameraFragment0 = null;
+            }
+        }
+        if(flag[1]){
+            cameraFragment1 = CameraFragment1.newInstance(new PreViewSize(PREVIEWWIDTH, PREVIEWHEIGHT));
+            getFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.frame1, cameraFragment1)
+                    .commit();
+
+        }else {
+            if(cameraFragment1!=null) {
+                getFragmentManager()
+                        .beginTransaction().remove(cameraFragment1).commit();
+                cameraFragment1 = null;
+            }
+        }
+        if(flag[2]){
+            cameraFragment2 = CameraFragment2.newInstance(new PreViewSize(PREVIEWWIDTH, PREVIEWHEIGHT));
+            getFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.frame2, cameraFragment2)
+                    .commit();
+
+        }else {
+            if(cameraFragment2!=null) {
+                getFragmentManager()
+                        .beginTransaction().remove(cameraFragment2).commit();
+                cameraFragment2 = null;
+            }
+        }
+        if(flag[3]){
+            cameraFragment3 = CameraFragment3.newInstance(new PreViewSize(PREVIEWWIDTH, PREVIEWHEIGHT));
+            getFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.frame3, cameraFragment3)
+                    .commit();
+
+        }else {
+            if(cameraFragment3!=null) {
+                getFragmentManager()
+                        .beginTransaction().remove(cameraFragment3).commit();
+                cameraFragment3 = null;
+            }
+        }
     }
 }

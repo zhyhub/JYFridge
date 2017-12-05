@@ -85,21 +85,6 @@ public class USBCameraActivity2 extends AppCompatActivity implements CameraDialo
     };
 
     @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        onDestroy();
-    }
-
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if(keyCode == KeyEvent.KEYCODE_BACK){
-            USBCameraActivity2.this.finish();
-            return false;
-        }
-        return super.onKeyDown(keyCode, event);
-    }
-
-    @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_usbcamera);

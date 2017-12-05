@@ -1,6 +1,7 @@
 package smartlink.zhy.jyfridge.service;
 
 import android.accessibilityservice.AccessibilityService;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
@@ -33,6 +34,10 @@ import java.util.Map;
 import okhttp3.Call;
 import smartlink.zhy.jyfridge.ConstantPool;
 import smartlink.zhy.jyfridge.R;
+import smartlink.zhy.jyfridge.activity.USBCameraActivity0;
+import smartlink.zhy.jyfridge.activity.USBCameraActivity1;
+import smartlink.zhy.jyfridge.activity.USBCameraActivity2;
+import smartlink.zhy.jyfridge.activity.USBCameraActivity3;
 import smartlink.zhy.jyfridge.bean.BaseEntity;
 import smartlink.zhy.jyfridge.json.JsonParser;
 import smartlink.zhy.jyfridge.utils.BaseCallBack;
@@ -58,6 +63,8 @@ public class VoiceService extends AccessibilityService {
     /**
      * 串口接入
      */
+
+    private boolean isOpen = false;
 
     private byte MODE;
 
@@ -126,6 +133,8 @@ public class VoiceService extends AccessibilityService {
     int readLength;
     int fid = -1;
 
+    private Context context;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -135,6 +144,7 @@ public class VoiceService extends AccessibilityService {
         mTts = SpeechSynthesizer.createSynthesizer(VoiceService.this, mTtsInitListener);
 
         initUart();
+        context = VoiceService.this;
     }
 
     /**
@@ -305,14 +315,6 @@ public class VoiceService extends AccessibilityService {
                 L.e(TAG, "msg    " + msg);
 
                 sendMsg(msg);
-
-//                if (!msg.equals("")) {
-//                    Intent test = new Intent();
-//                    test.setAction("smartlink.zhy.jyfridge.service");
-//                    test.putExtra("txt", msg);
-//                    sendBroadcast(test);
-//                    Log.e(TAG, "VoiceService  广播发送了   " + msg);
-//                }
             }
         }
 
@@ -713,7 +715,7 @@ public class VoiceService extends AccessibilityService {
     }
 
     /**
-     * 想串口写数据
+     * 向串口写数据
      */
     public void writeTTyDevice(final int fid, final byte[] buf) {
         if (fid < 0) {
@@ -748,8 +750,26 @@ public class VoiceService extends AccessibilityService {
             Log.e("TTTTTTTTT 8 = ", newData[i + 8] + "");
             Log.e("TTTTTTTTT 9 = ", newData[i + 9] + "");
             Log.e("TTTTTTTTT 10 = ", newData[i + 10] + "");
+            Log.e("TTTTTTTTT 4 = ", newData[i + 4] + "");
             MODE = newData[i + 2];
-            Log.e("TTTTTTTTT MODE = ", MODE + "");
+
+            byte l = newData[i + 4];
+            Log.e("TTTTTTTTT MODE = ", MODE + "       " + l);
+            if (l == 1 && !isOpen) {
+                isOpen = true;
+                Intent intent = new Intent();
+                intent.setAction("smartlink.zhy.jyfridge.service");
+                intent.putExtra("isOpen", isOpen);
+                sendBroadcast(intent);
+                Log.e(TAG, "VoiceService  广播发送了   " + isOpen);
+            } else if (l == 0 && isOpen) {
+                isOpen = false;
+                Intent intent = new Intent();
+                intent.setAction("smartlink.zhy.jyfridge.service");
+                intent.putExtra("isOpen", isOpen);
+                sendBroadcast(intent);
+                Log.e(TAG, "VoiceService  广播发送了   " + isOpen);
+            }
         }
     }
 
@@ -765,5 +785,12 @@ public class VoiceService extends AccessibilityService {
     }
 
 //=============================================================  上面是串口调用逻辑  ======================================================================================================
+
+//=============================================================  下面是调用摄像头逻辑  ======================================================================================================
+
+
+
+//=============================================================  上面是调用摄像头逻辑  ======================================================================================================
+
 
 }

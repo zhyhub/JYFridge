@@ -1,80 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/activity_main"
+    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <LinearLayout android:layout_width="match_parent"
-        android:id="@+id/topPanel"
-        android:orientation="horizontal"
-        android:layout_height="100dp">
-        <CheckBox
-            android:id="@+id/open0"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:text="0"/>
-        <CheckBox
-            android:id="@+id/open1"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:text="1"/>
-        <CheckBox
-            android:id="@+id/open2"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:text="2"/>
-        <CheckBox
-            android:layout_width="wrap_content"
-            android:id="@+id/open3"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:text="3"/>
 
-        <Button
-            android:id="@+id/open"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:text="打开"/>
-    </LinearLayout>
-    <LinearLayout
+
+    <android.support.v7.widget.AppCompatButton
+        android:id="@+id/button_0"
+        android:layout_weight="1"
+        android:text="摄像头0"
         android:layout_width="match_parent"
-        android:layout_below="@id/topPanel"
-        android:orientation="vertical"
-        android:layout_height="match_parent">
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_weight="1"
-            android:orientation="horizontal"
-            android:layout_height="0dp">
+        android:layout_height="0dp" />
 
-            <FrameLayout
-                android:id="@+id/frame0"
-                android:layout_weight="1"
-                android:layout_width="0dp"
-                android:layout_height="match_parent" />
-            <FrameLayout
-                android:id="@+id/frame1"
-                android:layout_weight="1"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"  />
+    <android.support.v7.widget.AppCompatButton
+        android:id="@+id/button_1"
+        android:text="摄像头1"
+        android:layout_weight="1"
+        android:layout_width="match_parent"
+        android:layout_height="0dp" />
 
-        </LinearLayout>
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_weight="1"
-            android:layout_height="0dp">
-            <FrameLayout
-                android:id="@+id/frame2"
-                android:layout_weight="1"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"  />
-            <FrameLayout
-                android:id="@+id/frame3"
-                android:layout_weight="1"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"  />
-        </LinearLayout>
-    </LinearLayout>
-</RelativeLayout>
+    <android.support.v7.widget.AppCompatButton
+        android:id="@+id/button_2"
+        android:text="摄像头2"
+        android:layout_weight="1"
+        android:layout_width="match_parent"
+        android:layout_height="0dp" />
+
+    <android.support.v7.widget.AppCompatButton
+        android:id="@+id/button_3"
+        android:text="摄像头3"
+        android:layout_weight="1"
+        android:layout_width="match_parent"
+        android:layout_height="0dp" />
+
+
+</LinearLayout>

@@ -6,6 +6,11 @@ package smartlink.zhy.jyfridge;
 
 public class ConstantPool {
 
+    public static final int Camera_0 = 0;
+    public static final int Camera_1 = 1;
+    public static final int Camera_2 = 2;
+    public static final int Camera_3 = 3;
+
     public static final String BASE_RUYI = "http://api.ruyi.ai/";
     public static final String APP_KEY = "a0927149-bfd5-40cc-824e-a110b0847c6e";
 

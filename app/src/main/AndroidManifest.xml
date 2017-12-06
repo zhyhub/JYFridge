@@ -45,8 +45,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".activity.MainActivity"
-            android:screenOrientation="landscape">
+        <activity android:name=".activity.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -54,14 +53,10 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".activity.USBCameraActivity0"
-            android:screenOrientation="landscape"/>
-        <activity android:name=".activity.USBCameraActivity1"
-            android:screenOrientation="landscape"/>
-        <activity android:name=".activity.USBCameraActivity2"
-            android:screenOrientation="landscape"/>
-        <activity android:name=".activity.USBCameraActivity3"
-            android:screenOrientation="landscape"/>
+        <activity android:name=".activity.USBCameraActivity0"/>
+        <activity android:name=".activity.USBCameraActivity1"/>
+        <activity android:name=".activity.USBCameraActivity2"/>
+        <activity android:name=".activity.USBCameraActivity3"/>
 
         <meta-data
             android:name="IFLYTEK_APPKEY"

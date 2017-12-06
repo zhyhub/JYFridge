@@ -2,9 +2,9 @@ package smartlink.zhy.jyfridge.activity;
 
 import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-import android.view.KeyEvent;
 import android.view.Surface;
 import android.view.View;
 
@@ -23,17 +23,15 @@ import smartlink.zhy.jyfridge.utils.L;
  * AndroidUSBCamera引擎
  */
 
-public class USBCameraActivity2 extends AppCompatActivity implements CameraDialog.CameraDialogParent{
+public class USBCameraActivity2 extends AppCompatActivity implements CameraDialog.CameraDialogParent {
 
     private static final String TAG = USBCameraActivity2.class.getSimpleName();
     public View mTextureView;
-
+    private CameraViewInterface mUVCCameraView;
     private USBCameraManager mUSBManager;
 
-    private CameraViewInterface mUVCCameraView;
-    private boolean isRequest;
+    private boolean isRequest = false;
     private boolean isPreview;
-
 
     /**
      * USB设备事件监听器
@@ -89,7 +87,7 @@ public class USBCameraActivity2 extends AppCompatActivity implements CameraDialo
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_usbcamera);
 
-        mTextureView = (View)findViewById(R.id.camera_view);
+        mTextureView = (View) findViewById(R.id.camera_view);
         mUVCCameraView = (CameraViewInterface) mTextureView;
         mUVCCameraView.setCallback(new CameraViewInterface.Callback() {
             @Override
@@ -124,33 +122,32 @@ public class USBCameraActivity2 extends AppCompatActivity implements CameraDialo
         mUSBManager.createUVCCamera(mUVCCameraView);
         L.e(TAG, "onCreate  + " + "getUsbDeviceCount + " + mUSBManager.getUsbDeviceCount());
 
-        //        Handler handler = new Handler();
-//        handler.postDelayed(new Runnable() {
-//            @Override
-//            public void run() {
-//                if(mUSBManager == null && ! mUSBManager.isCameraOpened()){
-//                    showShortMsg("抓拍异常，摄像头未开启");
-//                    return;
-//                }
-//                String picPath = USBCameraManager.ROOT_PATH+System.currentTimeMillis()
-//                        +USBCameraManager.SUFFIX_PNG;
-//                mUSBManager.capturePicture(picPath, new AbstractUVCCameraHandler.OnCaptureListener() {
-//                    @Override
-//                    public void onCaptureResult(String path) {
-//                        showShortMsg("USBCameraActivity1  保存路径："+path);
-//                        if(mUSBManager != null){
-//                            mUSBManager.unregisterUSB();
-//                            mUSBManager.closeCamera();
-//                            mUSBManager.release();
-//                        }
-//                        USBCameraActivity1.this.setResult(RESULT_OK);
-//                        USBCameraActivity1.this.finish();
-//                    }
-//                });
-//            }
-//        },2000);
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if(mUSBManager == null && ! mUSBManager.isCameraOpened()){
+                    showShortMsg("抓拍异常，摄像头未开启");
+                    return;
+                }
+                String picPath = USBCameraManager.ROOT_PATH+System.currentTimeMillis()
+                        +USBCameraManager.SUFFIX_PNG;
+                mUSBManager.capturePicture(picPath, new AbstractUVCCameraHandler.OnCaptureListener() {
+                    @Override
+                    public void onCaptureResult(String path) {
+                        showShortMsg("USBCameraActivity2  保存路径："+path);
+                        if(mUSBManager != null){
+                            mUSBManager.unregisterUSB();
+                            mUSBManager.closeCamera();
+                            mUSBManager.release();
+                        }
+                        USBCameraActivity2.this.setResult(RESULT_OK);
+                        USBCameraActivity2.this.finish();
+                    }
+                });
+            }
+        },5000);
     }
-
 
     @Override
     protected void onStart() {
@@ -198,9 +195,8 @@ public class USBCameraActivity2 extends AppCompatActivity implements CameraDialo
 
     @Override
     public void onDialogResult(boolean canceled) {
-        if(canceled){
+        if (canceled) {
             showShortMsg("取消操作");
         }
     }
-
 }

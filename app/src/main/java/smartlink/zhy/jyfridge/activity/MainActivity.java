@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatButton;
@@ -24,9 +25,10 @@ public class MainActivity extends AppCompatActivity{
 
     private MainReceiver mainReceiver;
 
-    private AppCompatButton button0,button1,button2,button3;
+    private Handler handler = new Handler();
 
-//    private void sendMsg(String txt) {
+
+    //    private void sendMsg(String txt) {
 //        BaseOkHttpClient.newBuilder()
 //                .addParam("q", txt)
 //                .addParam("app_key", ConstantPool.APP_KEY)
@@ -66,9 +68,7 @@ public class MainActivity extends AppCompatActivity{
 //            sendMsg(txt);
 
 //            if(isOpen){
-//                startCamera_0();
 //            }else {
-//                startCamera_1();
 //            }
         }
     }
@@ -85,13 +85,11 @@ public class MainActivity extends AppCompatActivity{
 
     private void startCamera_2() {
         Intent intent = new Intent(MainActivity.this, USBCameraActivity2.class);
-        MainActivity.this.startActivity(intent);
         MainActivity.this.startActivityForResult(intent,ConstantPool.Camera_2);
     }
 
     private void startCamera_3() {
         Intent intent = new Intent(MainActivity.this, USBCameraActivity3.class);
-        MainActivity.this.startActivity(intent);
         MainActivity.this.startActivityForResult(intent,ConstantPool.Camera_3);
     }
 
@@ -100,19 +98,36 @@ public class MainActivity extends AppCompatActivity{
         super.onActivityResult(requestCode, resultCode, data);
         if(resultCode == RESULT_OK){
             switch (requestCode){
-                case 0:
+                case ConstantPool.Camera_0:
                     L.e(TAG,"USBCameraActivity0  关闭了  打开USBCameraActivity1");
-//                    startCamera_1();
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            startCamera_1();
+                        }
+                    },2000);
                     break;
-                case 1:
+                case ConstantPool.Camera_1:
                     L.e(TAG,"USBCameraActivity1  关闭了  打开USBCameraActivity2");
-//                    startCamera_2();
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            startCamera_2();
+                        }
+                    },2000);
                     break;
-                case 2:
+                case ConstantPool.Camera_2:
                     L.e(TAG,"USBCameraActivity2  关闭了  打开USBCameraActivity3");
-//                    startCamera_3();
+
+                    Handler handler = new Handler();
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            startCamera_3();
+                        }
+                    },2000);
                     break;
-                case 3:
+                case ConstantPool.Camera_3:
                     L.e(TAG,"USBCameraActivity3  关闭了");
                     break;
             }
@@ -126,10 +141,10 @@ public class MainActivity extends AppCompatActivity{
         mainReceiver = new MainReceiver();
         registerReceiver(mainReceiver, new IntentFilter("smartlink.zhy.jyfridge.service"));
 
-        button0 = findViewById(R.id.button_0);
-        button1 = findViewById(R.id.button_1);
-        button2 = findViewById(R.id.button_2);
-        button3 = findViewById(R.id.button_3);
+        AppCompatButton button0 = findViewById(R.id.button_0);
+        AppCompatButton button1 = findViewById(R.id.button_1);
+        AppCompatButton button2 = findViewById(R.id.button_2);
+        AppCompatButton button3 = findViewById(R.id.button_3);
 
         button0.setOnClickListener(new View.OnClickListener() {
             @Override

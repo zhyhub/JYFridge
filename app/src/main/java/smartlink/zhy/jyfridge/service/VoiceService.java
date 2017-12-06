@@ -27,6 +27,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -114,7 +115,9 @@ public class VoiceService extends AccessibilityService {
     private byte DATA_45 = ConstantPool.Zero;
     private byte DATA_46;
 
-    private byte[] data = new byte[]{};
+    private byte[] data = new byte[]{};//写的数据
+
+    private byte[] sendData = new byte[]{};//读的数据
 
     boolean isWrite = false;
     SignwayManager mSignwayManager = null;
@@ -422,222 +425,29 @@ public class VoiceService extends AccessibilityService {
     private void sendMsg(String txt) {
         BaseOkHttpClient.newBuilder()
                 .addParam("q", txt)
-                .addParam("app_key", ConstantPool.APP_KEY)
+                .addParam("data", Arrays.toString(sendData))
                 .addParam("user_id", "123456")
                 .get()
-                .url(ConstantPool.BASE_RUYI + "v1/message")
+                .url(ConstantPool.BASE_URL + ConstantPool.AI)
                 .build().enqueue(new BaseCallBack() {
             @Override
             public void onSuccess(Object o) {
                 L.e(TAG, "onSuccess" + o.toString());
                 Gson gson = new Gson();
                 BaseEntity entity = gson.fromJson(o.toString(), BaseEntity.class);
-                Map<String, Object> map = entity.getResult().getIntents().get(0).getParameters();
-                if (map != null) {
-                    for (String key : map.keySet()) {                        //遍历取出key，再遍历map取出value。
-                        L.e(TAG, "key  " + key);
-                        L.e(TAG, "map.get(key).toString()  " + map.get(key).toString());
-
-                        if (map.get(key).toString().equals("mode")) {//模式设置  关闭quit    打开set
-                            for (String newKey1 : map.keySet()) {
-                                if (newKey1.equals("attr_value")) {
-                                    switch (map.get(newKey1).toString()) {
-                                        case "智能模式":
-                                            for (String newKey2 : map.keySet()) {
-                                                if (newKey2.equals("operation")) {
-                                                    if (map.get(newKey2).toString().equals("set")) {//打开智能模式
-                                                        MODE |= ConstantPool.Intelligent_Model;
-                                                        DATA_0 = ConstantPool.Data0_beginning_commend;
-                                                        DATA_1 = ConstantPool.Data1_beginning_commend;
-                                                        DATA_2 = ConstantPool.Data2_Modify_Mode;
-                                                        DATA_9 = MODE;
-                                                        sendByte();
-                                                        Log.e(TAG, "打开智能模式   MODE" + MODE);
-                                                    } else if (map.get(newKey2).toString().equals("quit")) {//关闭智能模式
-                                                        MODE &= (~ConstantPool.Intelligent_Model);
-                                                        DATA_0 = ConstantPool.Data0_beginning_commend;
-                                                        DATA_1 = ConstantPool.Data1_beginning_commend;
-                                                        DATA_2 = ConstantPool.Data2_Modify_Mode;
-                                                        DATA_9 = MODE;
-                                                        sendByte();
-                                                        Log.e(TAG, "关闭智能模式   MODE" + MODE);
-                                                    }
-                                                }
-                                            }
-                                            break;
-                                        case "假日模式":
-                                            for (String newKey2 : map.keySet()) {
-                                                if (newKey2.equals("operation")) {
-                                                    if (map.get(newKey2).toString().equals("set")) {//打开智能模式
-                                                        MODE |= ConstantPool.Holiday_Mode;
-                                                        DATA_0 = ConstantPool.Data0_beginning_commend;
-                                                        DATA_1 = ConstantPool.Data1_beginning_commend;
-                                                        DATA_2 = ConstantPool.Data2_Modify_Mode;
-                                                        DATA_9 = MODE;
-                                                        sendByte();
-                                                        Log.e(TAG, "打开假日模式   MODE" + MODE);
-                                                    } else if (map.get(newKey2).toString().equals("quit")) {//关闭智能模式
-                                                        MODE &= (~ConstantPool.Holiday_Mode);
-                                                        DATA_0 = ConstantPool.Data0_beginning_commend;
-                                                        DATA_1 = ConstantPool.Data1_beginning_commend;
-                                                        DATA_2 = ConstantPool.Data2_Modify_Mode;
-                                                        DATA_9 = MODE;
-                                                        sendByte();
-                                                        Log.e(TAG, "关闭假日模式   MODE" + MODE);
-                                                    }
-                                                }
-                                            }
-                                            break;
-                                        case "速冻模式":
-                                            for (String newKey2 : map.keySet()) {
-                                                if (newKey2.equals("operation")) {
-                                                    if (map.get(newKey2).toString().equals("set")) {//打开智能模式
-                                                        MODE |= ConstantPool.Quick_Freezing_Mode;
-                                                        DATA_0 = ConstantPool.Data0_beginning_commend;
-                                                        DATA_1 = ConstantPool.Data1_beginning_commend;
-                                                        DATA_2 = ConstantPool.Data2_Modify_Mode;
-                                                        DATA_9 = MODE;
-                                                        sendByte();
-                                                        Log.e(TAG, "打开速冻模式   MODE" + MODE);
-                                                    } else if (map.get(newKey2).toString().equals("quit")) {//关闭智能模式
-                                                        MODE &= (~ConstantPool.Quick_Freezing_Mode);
-                                                        DATA_0 = ConstantPool.Data0_beginning_commend;
-                                                        DATA_1 = ConstantPool.Data1_beginning_commend;
-                                                        DATA_2 = ConstantPool.Data2_Modify_Mode;
-                                                        DATA_9 = MODE;
-                                                        sendByte();
-                                                        Log.e(TAG, "关闭速冻模式   MODE" + MODE);
-                                                    }
-                                                }
-                                            }
-                                            break;
-                                        case "速冷模式":
-                                            for (String newKey2 : map.keySet()) {
-                                                if (newKey2.equals("operation")) {
-                                                    if (map.get(newKey2).toString().equals("set")) {//打开智能模式
-                                                        MODE |= ConstantPool.Quick_Cooling_Mode;
-                                                        DATA_0 = ConstantPool.Data0_beginning_commend;
-                                                        DATA_1 = ConstantPool.Data1_beginning_commend;
-                                                        DATA_2 = ConstantPool.Data2_Modify_Mode;
-                                                        DATA_9 = MODE;
-                                                        sendByte();
-                                                        Log.e(TAG, "打开速冷模式   MODE" + MODE);
-                                                    } else if (map.get(newKey2).toString().equals("quit")) {//关闭智能模式
-                                                        MODE &= (~ConstantPool.Quick_Cooling_Mode);
-                                                        DATA_0 = ConstantPool.Data0_beginning_commend;
-                                                        DATA_1 = ConstantPool.Data1_beginning_commend;
-                                                        DATA_2 = ConstantPool.Data2_Modify_Mode;
-                                                        DATA_9 = MODE;
-                                                        sendByte();
-                                                        Log.e(TAG, "关闭速冷模式   MODE" + MODE);
-                                                    }
-                                                }
-                                            }
-                                            break;
-                                        case "净味模式":
-                                            for (String newKey2 : map.keySet()) {
-                                                if (newKey2.equals("operation")) {
-                                                    if (map.get(newKey2).toString().equals("set")) {//打开智能模式
-                                                        MODE |= ConstantPool.LECO_Mode;
-                                                        DATA_0 = ConstantPool.Data0_beginning_commend;
-                                                        DATA_1 = ConstantPool.Data1_beginning_commend;
-                                                        DATA_2 = ConstantPool.Data2_Modify_Mode;
-                                                        DATA_9 = MODE;
-                                                        sendByte();
-                                                        Log.e(TAG, "打开净味模式   MODE" + MODE);
-                                                    } else if (map.get(newKey2).toString().equals("quit")) {//关闭智能模式
-                                                        MODE &= (~ConstantPool.LECO_Mode);
-                                                        DATA_0 = ConstantPool.Data0_beginning_commend;
-                                                        DATA_1 = ConstantPool.Data1_beginning_commend;
-                                                        DATA_2 = ConstantPool.Data2_Modify_Mode;
-                                                        DATA_9 = MODE;
-                                                        sendByte();
-                                                        Log.e(TAG, "关闭净味模式   MODE" + MODE);
-                                                    }
-                                                }
-                                            }
-                                            break;
-                                        case "变温关闭模式":
-                                            for (String newKey2 : map.keySet()) {
-                                                if (newKey2.equals("operation")) {
-                                                    if (map.get(newKey2).toString().equals("set")) {//打开智能模式
-                                                        MODE |= ConstantPool.BianWen_Shutdown_Model;
-                                                        DATA_0 = ConstantPool.Data0_beginning_commend;
-                                                        DATA_1 = ConstantPool.Data1_beginning_commend;
-                                                        DATA_2 = ConstantPool.Data2_Modify_Mode;
-                                                        DATA_9 = MODE;
-                                                        sendByte();
-                                                        Log.e(TAG, "打开变温关闭模式   MODE" + MODE);
-                                                    } else if (map.get(newKey2).toString().equals("quit")) {//关闭智能模式
-                                                        MODE &= (~ConstantPool.BianWen_Shutdown_Model);
-                                                        DATA_0 = ConstantPool.Data0_beginning_commend;
-                                                        DATA_1 = ConstantPool.Data1_beginning_commend;
-                                                        DATA_2 = ConstantPool.Data2_Modify_Mode;
-                                                        DATA_9 = MODE;
-                                                        sendByte();
-                                                        Log.e(TAG, "关闭变温关闭模式   MODE" + MODE);
-                                                    }
-                                                }
-                                            }
-                                            break;
-                                        case "冷藏关闭模式":
-                                            for (String newKey2 : map.keySet()) {
-                                                if (newKey2.equals("operation")) {
-                                                    if (map.get(newKey2).toString().equals("set")) {//打开智能模式
-                                                        MODE |= ConstantPool.LengCang_Shutdown_Model;
-                                                        DATA_0 = ConstantPool.Data0_beginning_commend;
-                                                        DATA_1 = ConstantPool.Data1_beginning_commend;
-                                                        DATA_2 = ConstantPool.Data2_Modify_Mode;
-                                                        DATA_9 = MODE;
-                                                        sendByte();
-                                                        Log.e(TAG, "打开冷藏关闭模式   MODE" + MODE);
-                                                    } else if (map.get(newKey2).toString().equals("quit")) {//关闭智能模式
-                                                        MODE &= (~ConstantPool.LengCang_Shutdown_Model);
-                                                        DATA_0 = ConstantPool.Data0_beginning_commend;
-                                                        DATA_1 = ConstantPool.Data1_beginning_commend;
-                                                        DATA_2 = ConstantPool.Data2_Modify_Mode;
-                                                        DATA_9 = MODE;
-                                                        sendByte();
-                                                        Log.e(TAG, "关闭冷藏关闭模式   MODE" + MODE);
-                                                    }
-                                                }
-                                            }
-                                            break;
-                                        case "童锁模式":
-                                            for (String newKey2 : map.keySet()) {
-                                                if (newKey2.equals("operation")) {
-                                                    if (map.get(newKey2).toString().equals("set")) {//打开智能模式
-                                                        MODE |= ConstantPool.Child_Lock_Mode;
-                                                        DATA_0 = ConstantPool.Data0_beginning_commend;
-                                                        DATA_1 = ConstantPool.Data1_beginning_commend;
-                                                        DATA_2 = ConstantPool.Data2_Modify_Mode;
-                                                        DATA_9 = MODE;
-                                                        sendByte();
-                                                        Log.e(TAG, "打开童锁模式   MODE" + MODE);
-                                                    } else if (map.get(newKey2).toString().equals("quit")) {//关闭智能模式
-                                                        MODE &= (~ConstantPool.Child_Lock_Mode);
-                                                        DATA_0 = ConstantPool.Data0_beginning_commend;
-                                                        DATA_1 = ConstantPool.Data1_beginning_commend;
-                                                        DATA_2 = ConstantPool.Data2_Modify_Mode;
-                                                        DATA_9 = MODE;
-                                                        sendByte();
-                                                        Log.e(TAG, "关闭童锁模式   MODE" + MODE);
-                                                    }
-                                                }
-                                            }
-                                            break;
-                                    }
-                                }
-                            }
+                if (entity.getType() == 1) {
+                    if (!entity.isSuceess()) {
+                        if (entity.getData() != null && entity.getData().length != 0) {
+                            writeTTyDevice(fid, entity.getData());
                         }
                     }
                 }
-                mTts.startSpeaking(entity.getResult().getIntents().get(0).getOutputs().get(1).getProperty().getText(), mTtsListener);
+                mTts.startSpeaking(entity.getText(), mTtsListener);
             }
 
             @Override
             public void onError(int code) {
-                L.e(TAG, "onError");
+                L.e(TAG, "sendMsg onError");
             }
 
             @Override
@@ -689,6 +499,9 @@ public class VoiceService extends AccessibilityService {
         writeTTyDevice(fid, data);
     }
 
+    private boolean isSet = false;
+    private Thread thread = new Thread();
+
     /**
      * 读串口数据
      */
@@ -696,15 +509,21 @@ public class VoiceService extends AccessibilityService {
         if (fid < 0) {
             return;
         }
+
         new Thread(new Runnable() {
             @Override
             public void run() {
                 while (isWrite) {
                     continue;
                 }
-                readLength = mSignwayManager.readUart(fid, rbuf, rbuf.length);
-                if (readLength > 47) {
-                    setNewData(rbuf);
+                if(!isSet){
+                    isSet = true;
+                    readLength = mSignwayManager.readUart(fid, rbuf, rbuf.length);
+                    if (readLength > 47) {
+                        if(!isSet){
+                            setNewData(rbuf);
+                        }
+                    }
                 }
             }
         }).start();
@@ -739,17 +558,27 @@ public class VoiceService extends AccessibilityService {
                     return;
                 }
             }
-            Log.e("TTTTTTTTT 2 = ", newData[i + 2] + "");
-            Log.e("TTTTTTTTT 5 = ", newData[i + 5] + "");
-            Log.e("TTTTTTTTT 6 = ", newData[i + 6] + "");
-            Log.e("TTTTTTTTT 7 = ", newData[i + 7] + "");
-            Log.e("TTTTTTTTT 8 = ", newData[i + 8] + "");
-            Log.e("TTTTTTTTT 9 = ", newData[i + 9] + "");
-            Log.e("TTTTTTTTT 10 = ", newData[i + 10] + "");
-            Log.e("TTTTTTTTT 4 = ", newData[i + 4] + "");
-            MODE = newData[i + 2];
 
-            byte l = newData[i + 4];
+            for (int j = 0; j < 48; j++) {
+                L.e(TAG,i + "       " + newData.length);
+                sendData[j] = newData[i];
+                i++;
+                if (i > (newData.length - 2)) {
+                    return;
+                }
+            }
+
+            Log.e("TTTTTTTTT 2 = ", sendData[2] + "");
+            Log.e("TTTTTTTTT 5 = ", sendData[5] + "");
+            Log.e("TTTTTTTTT 6 = ", sendData[6] + "");
+            Log.e("TTTTTTTTT 7 = ", sendData[7] + "");
+            Log.e("TTTTTTTTT 8 = ", sendData[8] + "");
+            Log.e("TTTTTTTTT 9 = ", sendData[9] + "");
+            Log.e("TTTTTTTTT 10 = ", sendData[10] + "");
+            Log.e("TTTTTTTTT 4 = ", sendData[4] + "");
+            MODE = sendData[2];
+
+            byte l = sendData[4];
             Log.e("TTTTTTTTT MODE = ", MODE + "       " + l);
             if (l == 1 && !isOpen) {
                 isOpen = true;
@@ -767,6 +596,7 @@ public class VoiceService extends AccessibilityService {
                 Log.e(TAG, "VoiceService  广播发送了   " + isOpen);
             }
         }
+        isSet = false;
     }
 
     /**
@@ -783,7 +613,6 @@ public class VoiceService extends AccessibilityService {
 //=============================================================  上面是串口调用逻辑  ======================================================================================================
 
 //=============================================================  下面是调用摄像头逻辑  ======================================================================================================
-
 
 
 //=============================================================  上面是调用摄像头逻辑  ======================================================================================================

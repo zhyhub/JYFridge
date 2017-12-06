@@ -118,7 +118,7 @@ public class VoiceService extends AccessibilityService {
 
     private byte[] data = new byte[]{};//写的数据
 
-    private byte[] sendData = new byte[]{};//读的数据
+    private byte[] sendData = new byte[48];//读的数据
 
     boolean isWrite = false;
     SignwayManager mSignwayManager = null;
@@ -133,8 +133,6 @@ public class VoiceService extends AccessibilityService {
     int readLength;
     int fid = -1;
 
-    private Context context;
-
     @Override
     public void onCreate() {
         super.onCreate();
@@ -142,9 +140,7 @@ public class VoiceService extends AccessibilityService {
         // 使用SpeechRecognizer对象，可根据回调消息自定义界面；
         mIat = SpeechRecognizer.createRecognizer(VoiceService.this, mInitListener);
         mTts = SpeechSynthesizer.createSynthesizer(VoiceService.this, mTtsInitListener);
-
         initUart();
-        context = VoiceService.this;
     }
 
     /**
@@ -313,8 +309,9 @@ public class VoiceService extends AccessibilityService {
             if (isLast) {
                 // TODO 最后的结果
                 L.e(TAG, "msg    " + msg);
-
-                sendMsg(msg);
+                if (!msg.equals("")) {
+                    sendMsg(msg);
+                }
             }
         }
 
@@ -424,6 +421,7 @@ public class VoiceService extends AccessibilityService {
     //=============================================================  下面是请求海知语音获取意图  ======================================================================================================
 
     private void sendMsg(String txt) {
+        L.e(TAG,"  sendMsg   "+Arrays.toString(sendData));
         BaseOkHttpClient.newBuilder()
                 .addParam("q", txt)
                 .addParam("data", Arrays.toString(sendData))
@@ -436,19 +434,24 @@ public class VoiceService extends AccessibilityService {
                 L.e(TAG, "onSuccess" + o.toString());
                 Gson gson = new Gson();
                 BaseEntity entity = gson.fromJson(o.toString(), BaseEntity.class);
-                if (entity.getType() == 1) {
-                    if (!entity.isSuceess()) {
-                        if (entity.getData() != null && entity.getData().length != 0) {
-                            writeTTyDevice(fid, entity.getData());
+                if(entity.getCode() == 1){
+                    if (entity.getType() == 1) {
+                        if (!entity.isSuceess()) {
+                            if (entity.getData() != null && entity.getData().length != 0) {
+                                writeTTyDevice(fid, entity.getData());
+                            }
                         }
                     }
+                    if (!entity.getText().equals("")) {
+                        mTts.startSpeaking(entity.getText(), mTtsListener);
+                    }
                 }
-                mTts.startSpeaking(entity.getText(), mTtsListener);
             }
 
             @Override
             public void onError(int code) {
                 L.e(TAG, "sendMsg onError");
+                mTts.startSpeaking("哎呀，好像出问题了", mTtsListener);
             }
 
             @Override
@@ -484,7 +487,7 @@ public class VoiceService extends AccessibilityService {
             @Override
             public void run() {
                 Log.e("TAG", "写");
-                DATA_2 = (byte) 0x04;
+                DATA_2 = ConstantPool.Data2_Running_State;
                 sendByte();
                 readHandler.postDelayed(readUpdate, 2000); //1秒后再调用
             }
@@ -501,7 +504,6 @@ public class VoiceService extends AccessibilityService {
     }
 
     private boolean isSet = false;
-    private Thread thread = new Thread();
 
     /**
      * 读串口数据
@@ -510,21 +512,19 @@ public class VoiceService extends AccessibilityService {
         if (fid < 0) {
             return;
         }
-
         new Thread(new Runnable() {
             @Override
             public void run() {
                 while (isWrite) {
                     continue;
                 }
-                if(!isSet){
+                if (!isSet) {
                     isSet = true;
                     readLength = mSignwayManager.readUart(fid, rbuf, rbuf.length);
                     if (readLength > 47) {
-                        if(!isSet){
-                            setNewData(rbuf);
-                        }
+                        setNewData(rbuf, readLength);
                     }
+                    isSet = false;
                 }
             }
         }).start();
@@ -550,88 +550,61 @@ public class VoiceService extends AccessibilityService {
     /**
      * 获取最新的串口数据
      */
-    private void setNewData(byte[] newData) {
-        if (newData != null && newData.length != 0) {
+    private void setNewData(byte[] newData, int readLength) {
+        if (newData != null && readLength != 0) {
             int i = 0;
             while ((newData[i] != 0x55) && (newData[i + 1] != 0xAA)) {
                 i++;
-                if (i > (newData.length - 46)) {
+                if (i > (readLength - 46)) {
                     return;
                 }
             }
 
             for (int j = 0; j < 48; j++) {
-                L.e(TAG,i + "       " + newData.length);
                 sendData[j] = newData[i];
                 i++;
-                if (i > (newData.length - 2)) {
+                if (i > (readLength - 1)) {
                     return;
                 }
             }
 
-            Log.e("TTTTTTTTT 2 = ", sendData[2] + "");
-            Log.e("TTTTTTTTT 5 = ", sendData[5] + "");
-            Log.e("TTTTTTTTT 6 = ", sendData[6] + "");
-            Log.e("TTTTTTTTT 7 = ", sendData[7] + "");
-            Log.e("TTTTTTTTT 8 = ", sendData[8] + "");
-            Log.e("TTTTTTTTT 9 = ", sendData[9] + "");
-            Log.e("TTTTTTTTT 10 = ", sendData[10] + "");
-            Log.e("TTTTTTTTT 4 = ", sendData[4] + "");
             MODE = sendData[2];
 
-            if(( sendData[4] & 0x01) != 0){
-                L.e(TAG,"冷藏室门   开了");
-                if (!isOpen) {
-                    isOpen = true;
-                    Intent intent = new Intent();
-                    intent.setAction("smartlink.zhy.jyfridge.service");
-                    intent.putExtra("isOpen", isOpen);
-                    sendBroadcast(intent);
-                    Log.e(TAG, "VoiceService  开了  广播发送了   " + isOpen);
-                }
-            }else {
-                L.e(TAG,"冷藏室门   关了");
-                if (isOpen) {
-                    isOpen = false;
-                    Intent intent = new Intent();
-                    intent.setAction("smartlink.zhy.jyfridge.service");
-                    intent.putExtra("isOpen", isOpen);
-                    sendBroadcast(intent);
-                    Log.e(TAG, "VoiceService  关了  广播发送了   " + isOpen);
-                }
-            }
-            if(( sendData[4] & 0x02) != 0){
-                L.e(TAG,"变温室门   开了");
-            }else {
-                L.e(TAG,"变温室门   关了");
-            }
-            if(( sendData[4] & 0x08) != 0){
-                L.e(TAG,"冷冻室门   开了");
-            }else {
-                L.e(TAG,"冷冻室门   关了");
-            }
+//            if ((sendData[4] & 0x01) != 0) {
+//                L.e(TAG, "冷藏室门   开了");
+//                if (!isOpen) {
+//                    isOpen = true;
+//                    Intent intent = new Intent();
+//                    intent.setAction("smartlink.zhy.jyfridge.service");
+//                    intent.putExtra("isOpen", isOpen);
+//                    sendBroadcast(intent);
+//                    Log.e(TAG, "VoiceService  开了  广播发送了   " + isOpen);
+//                }
+//            } else {
+//                L.e(TAG, "冷藏室门   关了");
+//                if (isOpen) {
+//                    isOpen = false;
+//                    Intent intent = new Intent();
+//                    intent.setAction("smartlink.zhy.jyfridge.service");
+//                    intent.putExtra("isOpen", isOpen);
+//                    sendBroadcast(intent);
+//                    Log.e(TAG, "VoiceService  关了  广播发送了   " + isOpen);
+//                }
+//            }
+//            if ((sendData[4] & 0x02) != 0) {
+//                L.e(TAG, "变温室门   开了");
+//            } else {
+//                L.e(TAG, "变温室门   关了");
+//            }
+//            if ((sendData[4] & 0x08) != 0) {
+//                L.e(TAG, "冷冻室门   开了");
+//            } else {
+//                L.e(TAG, "冷冻室门   关了");
+//            }
             Log.e("TTTTTTTTT MODE = ", MODE + "");
         }
-        isSet = false;
-    }
-
-    /**
-     * 发送查询指令
-     */
-    private void InquiryStatus() {
-        Log.e("TAG", "查询");
-        DATA_0 = ConstantPool.Data0_beginning_commend;
-        DATA_1 = ConstantPool.Data1_beginning_commend;
-        DATA_2 = ConstantPool.Data2_Running_State;
-        sendByte();
     }
 
 //=============================================================  上面是串口调用逻辑  ======================================================================================================
-
-//=============================================================  下面是调用摄像头逻辑  ======================================================================================================
-
-
-//=============================================================  上面是调用摄像头逻辑  ======================================================================================================
-
 
 }

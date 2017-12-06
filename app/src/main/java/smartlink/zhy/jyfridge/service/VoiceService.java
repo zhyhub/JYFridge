@@ -9,6 +9,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.iflytek.cloud.ErrorCode;
@@ -578,23 +579,38 @@ public class VoiceService extends AccessibilityService {
             Log.e("TTTTTTTTT 4 = ", sendData[4] + "");
             MODE = sendData[2];
 
-            byte l = sendData[4];
-            Log.e("TTTTTTTTT MODE = ", MODE + "       " + l);
-            if (l == 1 && !isOpen) {
-                isOpen = true;
-                Intent intent = new Intent();
-                intent.setAction("smartlink.zhy.jyfridge.service");
-                intent.putExtra("isOpen", isOpen);
-                sendBroadcast(intent);
-                Log.e(TAG, "VoiceService  广播发送了   " + isOpen);
-            } else if (l == 0 && isOpen) {
-                isOpen = false;
-                Intent intent = new Intent();
-                intent.setAction("smartlink.zhy.jyfridge.service");
-                intent.putExtra("isOpen", isOpen);
-                sendBroadcast(intent);
-                Log.e(TAG, "VoiceService  广播发送了   " + isOpen);
+            if(( sendData[4] & 0x01) != 0){
+                L.e(TAG,"冷藏室门   开了");
+                if (!isOpen) {
+                    isOpen = true;
+                    Intent intent = new Intent();
+                    intent.setAction("smartlink.zhy.jyfridge.service");
+                    intent.putExtra("isOpen", isOpen);
+                    sendBroadcast(intent);
+                    Log.e(TAG, "VoiceService  开了  广播发送了   " + isOpen);
+                }
+            }else {
+                L.e(TAG,"冷藏室门   关了");
+                if (isOpen) {
+                    isOpen = false;
+                    Intent intent = new Intent();
+                    intent.setAction("smartlink.zhy.jyfridge.service");
+                    intent.putExtra("isOpen", isOpen);
+                    sendBroadcast(intent);
+                    Log.e(TAG, "VoiceService  关了  广播发送了   " + isOpen);
+                }
             }
+            if(( sendData[4] & 0x02) != 0){
+                L.e(TAG,"变温室门   开了");
+            }else {
+                L.e(TAG,"变温室门   关了");
+            }
+            if(( sendData[4] & 0x08) != 0){
+                L.e(TAG,"冷冻室门   开了");
+            }else {
+                L.e(TAG,"冷冻室门   关了");
+            }
+            Log.e("TTTTTTTTT MODE = ", MODE + "");
         }
         isSet = false;
     }

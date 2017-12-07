@@ -19,9 +19,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
@@ -44,8 +46,17 @@ public class MainActivity extends AppCompatActivity {
 
     private Handler handler = new Handler();
 
-    private OkHttpClient client;
-    private MediaType MEDIA_TYPE_PNG = MediaType.parse("image/png");
+    private OkHttpClient client = new OkHttpClient.Builder()
+            .addInterceptor(new Interceptor() {
+                @Override
+                public Response intercept(Chain chain) throws IOException {
+                    okhttp3.Request request = chain.request().newBuilder()
+                            .build();
+                    return chain.proceed(request);
+                }
+            })
+            .build();
+
     private List<String> imgUrls = new ArrayList<>();
 
     private class MainReceiver extends BroadcastReceiver {
@@ -61,21 +72,33 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 打开陀螺仪摄像头
+     */
     private void startCamera_0() {
         Intent intent = new Intent(MainActivity.this, USBCameraActivity0.class);
         MainActivity.this.startActivityForResult(intent, ConstantPool.Camera_0);
     }
 
+    /**
+     * 打开普通摄像头1
+     */
     private void startCamera_1() {
         Intent intent = new Intent(MainActivity.this, USBCameraActivity1.class);
         MainActivity.this.startActivityForResult(intent, ConstantPool.Camera_1);
     }
 
+    /**
+     * 打开普通摄像头2
+     */
     private void startCamera_2() {
         Intent intent = new Intent(MainActivity.this, USBCameraActivity2.class);
         MainActivity.this.startActivityForResult(intent, ConstantPool.Camera_2);
     }
 
+    /**
+     * 打开普通摄像头3
+     */
     private void startCamera_3() {
         Intent intent = new Intent(MainActivity.this, USBCameraActivity3.class);
         MainActivity.this.startActivityForResult(intent, ConstantPool.Camera_3);
@@ -95,13 +118,11 @@ public class MainActivity extends AppCompatActivity {
 //                            startCamera_1();
 //                        }
 //                    },2000);
-                        String path0 = data.getStringExtra("img0");
-                        imgUrls.add(path0);
+                        imgUrls.add(data.getStringExtra("img0"));
                         break;
                     case ConstantPool.Camera_1:
                         L.e(TAG, "USBCameraActivity1  关闭了  打开USBCameraActivity2");
-                        String path1 = data.getStringExtra("img1");
-                        imgUrls.add(path1);
+                        imgUrls.add(data.getStringExtra("img1"));
                         handler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
@@ -111,9 +132,7 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case ConstantPool.Camera_2:
                         L.e(TAG, "USBCameraActivity2  关闭了  打开USBCameraActivity3");
-                        String path2 = data.getStringExtra("img2");
-                        imgUrls.add(path2);
-                        handler = new Handler();
+                        imgUrls.add(data.getStringExtra("img2"));
                         handler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
@@ -123,8 +142,7 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case ConstantPool.Camera_3:
                         L.e(TAG, "USBCameraActivity3  关闭了   准备上传图片");
-                        String path3 = data.getStringExtra("img3");
-                        imgUrls.add(path3);
+                        imgUrls.add(data.getStringExtra("img3"));
                         mHandler.sendEmptyMessage(ConstantPool.Camera_3);
                         break;
                 }
@@ -148,39 +166,43 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * 上传多张图片
-     * @param imgUrls  图片集合   正常开关门情况下有四张图片    每天凌晨自动拍照只有三张  img0冰箱门上的不会有
+     *
+     * @param imgUrls 图片集合   正常开关门情况下有四张图片    每天凌晨自动拍照只有三张  img0冰箱门上的不会有
      */
-    private void upLoadImg(List<String> imgUrls) {
-        if (imgUrls != null && imgUrls.size() != 0) {
+    private void upLoadImg(final List<String> imgUrls) {
 
-            MultipartBody.Builder builder = new MultipartBody.Builder().setType(MultipartBody.FORM);
+        L.e(TAG,"图片数量   "+imgUrls.size() + "");
 
-            for (String path : imgUrls) {
-                builder.addFormDataPart("imgs", null, RequestBody.create(MEDIA_TYPE_PNG, new File(path)));
+        MediaType MEDIA_TYPE_PNG = MediaType.parse("image/png");
+        MultipartBody.Builder builder = new MultipartBody.Builder().setType(MultipartBody.FORM);
+
+        if (imgUrls.size() != 0) {
+            for (int i = 0; i < imgUrls.size(); i++) {
+                File f = new File(imgUrls.get(i));
+                builder.addFormDataPart("imgs", f.getName(), RequestBody.create(MEDIA_TYPE_PNG, f));
             }
             builder.addFormDataPart("img.pid", "123456");
-
-            RequestBody requestBody = builder.build();
-
-            Request request = new Request.Builder()
-                    .url(ConstantPool.UpLoadInfo)//地址
-                    .post(requestBody)//添加请求体
-                    .build();
-
-            client.newCall(request).enqueue(new Callback() {
-                @Override
-                public void onFailure(Call call, IOException e) {
-                    L.e(TAG, "上传失败:e.getLocalizedMessage() = " + e.getLocalizedMessage());
-
-                }
-
-                @Override
-                public void onResponse(Call call, Response response) throws IOException {
-                    L.e(TAG, "上传照片成功：response = " + response.body().string());
-
-                }
-            });
         }
+
+        MultipartBody requestBody = builder.build();
+
+        Request request = new Request.Builder()
+                .url(ConstantPool.UpLoadInfo)
+                .post(requestBody)
+                .build();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                L.e(TAG, "请求失败   " + e.getMessage());
+                imgUrls.clear();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                L.e(TAG, "请求成功   " + response.toString());
+                imgUrls.clear();
+            }
+        });
     }
 
     @Override

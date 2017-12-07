@@ -248,6 +248,11 @@ public class VoiceService extends AccessibilityService {
     // 播放进度
     private int mPercentForPlaying = 0;
 
+    /**
+     * 讯飞唤醒监听
+     * @param event  监听事件
+     * @return
+     */
     @Override
     protected boolean onKeyEvent(KeyEvent event) {
         switch (event.getKeyCode()) {
@@ -276,7 +281,7 @@ public class VoiceService extends AccessibilityService {
     }
 
     /**
-     * 听写监听器。
+     * 讯飞听写监听器。
      */
     private RecognizerListener mRecognizerListener = new RecognizerListener() {
 
@@ -325,6 +330,11 @@ public class VoiceService extends AccessibilityService {
         }
     };
 
+    /**
+     * 拼接语音
+     * @param results  讯飞识别返回的结果
+     * @return   返回拼接的结果
+     */
     private String printResult(RecognizerResult results) {
         L.e(TAG, "printResult");
         String text = JsonParser.parseIatResult(results.getResultString());
@@ -418,7 +428,7 @@ public class VoiceService extends AccessibilityService {
         readHandler.removeCallbacks(readUpdate);//停止指令
     }
 
-    //=============================================================  下面是请求海知语音获取意图  ======================================================================================================
+//=============================================================  下面是请求海知语音获取意图  ======================================================================================================
 
     private void sendMsg(String txt) {
         L.e(TAG, "  sendMsg   " + Arrays.toString(sendData));
@@ -460,6 +470,7 @@ public class VoiceService extends AccessibilityService {
             }
         });
     }
+
 //=============================================================  上面是请求海知语音获取意图  ======================================================================================================
 
 

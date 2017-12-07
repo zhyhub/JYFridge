@@ -16,7 +16,7 @@ public class ConstantPool {
     public static final String APP_KEY = "a0927149-bfd5-40cc-824e-a110b0847c6e";
 
     public static final String AI = BASE_URL + "in/general!ai";
-    public static final String UpLoadInfo = BASE_URL + "in/img!uploadInfo";
+    public static final String UpLoadInfo = "http://192.168.199.182:8080/imgTest/in/img!uploadInfo";
 
     public static final byte Zero = 0x00;
     public static final byte Default = 10;

@@ -421,20 +421,20 @@ public class VoiceService extends AccessibilityService {
     //=============================================================  下面是请求海知语音获取意图  ======================================================================================================
 
     private void sendMsg(String txt) {
-        L.e(TAG,"  sendMsg   "+Arrays.toString(sendData));
+        L.e(TAG, "  sendMsg   " + Arrays.toString(sendData));
         BaseOkHttpClient.newBuilder()
                 .addParam("q", txt)
                 .addParam("data", Arrays.toString(sendData))
                 .addParam("user_id", "123456")
                 .get()
-                .url(ConstantPool.BASE_URL + ConstantPool.AI)
+                .url(ConstantPool.AI)
                 .build().enqueue(new BaseCallBack() {
             @Override
             public void onSuccess(Object o) {
                 L.e(TAG, "onSuccess" + o.toString());
                 Gson gson = new Gson();
                 BaseEntity entity = gson.fromJson(o.toString(), BaseEntity.class);
-                if(entity.getCode() == 1){
+                if (entity.getCode() == 1) {
                     if (entity.getType() == 1) {
                         if (!entity.isSuceess()) {
                             if (entity.getData() != null && entity.getData().length != 0) {
@@ -569,39 +569,39 @@ public class VoiceService extends AccessibilityService {
             }
 
             MODE = sendData[2];
-
-//            if ((sendData[4] & 0x01) != 0) {
-//                L.e(TAG, "冷藏室门   开了");
-//                if (!isOpen) {
-//                    isOpen = true;
-//                    Intent intent = new Intent();
-//                    intent.setAction("smartlink.zhy.jyfridge.service");
-//                    intent.putExtra("isOpen", isOpen);
-//                    sendBroadcast(intent);
-//                    Log.e(TAG, "VoiceService  开了  广播发送了   " + isOpen);
-//                }
-//            } else {
-//                L.e(TAG, "冷藏室门   关了");
-//                if (isOpen) {
-//                    isOpen = false;
-//                    Intent intent = new Intent();
-//                    intent.setAction("smartlink.zhy.jyfridge.service");
-//                    intent.putExtra("isOpen", isOpen);
-//                    sendBroadcast(intent);
-//                    Log.e(TAG, "VoiceService  关了  广播发送了   " + isOpen);
-//                }
-//            }
-//            if ((sendData[4] & 0x02) != 0) {
-//                L.e(TAG, "变温室门   开了");
-//            } else {
-//                L.e(TAG, "变温室门   关了");
-//            }
-//            if ((sendData[4] & 0x08) != 0) {
-//                L.e(TAG, "冷冻室门   开了");
-//            } else {
-//                L.e(TAG, "冷冻室门   关了");
-//            }
             Log.e("TTTTTTTTT MODE = ", MODE + "");
+
+            if ((sendData[4] & 0x01) != 0) {
+//                L.e(TAG, "冷藏室门   开了");
+                if (!isOpen) {
+                    isOpen = true;
+                    Intent intent = new Intent();
+                    intent.setAction("smartlink.zhy.jyfridge.service");
+                    intent.putExtra("isOpen", isOpen);
+                    sendBroadcast(intent);
+                    Log.e(TAG, "VoiceService  开了  广播发送了   " + isOpen);
+                }
+            } else {
+//                L.e(TAG, "冷藏室门   关了");
+                if (isOpen) {
+                    isOpen = false;
+                    Intent intent = new Intent();
+                    intent.setAction("smartlink.zhy.jyfridge.service");
+                    intent.putExtra("isOpen", isOpen);
+                    sendBroadcast(intent);
+                    Log.e(TAG, "VoiceService  关了  广播发送了   " + isOpen);
+                }
+            }
+            if ((sendData[4] & 0x02) != 0) {
+//                L.e(TAG, "变温室门   开了");
+            } else {
+//                L.e(TAG, "变温室门   关了");
+            }
+            if ((sendData[4] & 0x08) != 0) {
+//                L.e(TAG, "冷冻室门   开了");
+            } else {
+//                L.e(TAG, "冷冻室门   关了");
+            }
         }
     }
 

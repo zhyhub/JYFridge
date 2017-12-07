@@ -1,5 +1,6 @@
 package smartlink.zhy.jyfridge.activity;
 
+import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -28,7 +29,7 @@ import smartlink.zhy.jyfridge.utils.L;
  * AndroidUSBCamera引擎
  */
 
-public class USBCameraActivity0 extends AppCompatActivity implements CameraDialog.CameraDialogParent,SensorEventListener {
+public class USBCameraActivity0 extends AppCompatActivity implements CameraDialog.CameraDialogParent, SensorEventListener {
 
     private static final String TAG = USBCameraActivity0.class.getSimpleName();
     public View mTextureView;
@@ -52,19 +53,19 @@ public class USBCameraActivity0 extends AppCompatActivity implements CameraDialo
 
     /**
      * USB设备事件监听器
-     * */
+     */
     private USBCameraManager.OnMyDevConnectListener listener = new USBCameraManager.OnMyDevConnectListener() {
         // 插入USB设备
         @Override
         public void onAttachDev(UsbDevice device) {
-            if(mUSBManager == null || mUSBManager.getUsbDeviceCount() == 0){
+            if (mUSBManager == null || mUSBManager.getUsbDeviceCount() == 0) {
                 showShortMsg("未检测到USB摄像头设备");
                 return;
             }
             // 请求打开摄像头
-            if(! isRequest){
+            if (!isRequest) {
                 isRequest = true;
-                if(mUSBManager != null){
+                if (mUSBManager != null) {
                     mUSBManager.requestPermission(ConstantPool.Camera_0);
                 }
             }
@@ -73,21 +74,21 @@ public class USBCameraActivity0 extends AppCompatActivity implements CameraDialo
         // 拔出USB设备
         @Override
         public void onDettachDev(UsbDevice device) {
-            if(isRequest){
+            if (isRequest) {
                 // 关闭摄像头
                 isRequest = false;
                 mUSBManager.closeCamera();
-                showShortMsg(device.getDeviceName()+"已拨出");
+                showShortMsg(device.getDeviceName() + "已拨出");
             }
         }
 
         // 连接USB设备成功
         @Override
-        public void onConnectDev(UsbDevice device,boolean isConnected) {
-            if(! isConnected) {
+        public void onConnectDev(UsbDevice device, boolean isConnected) {
+            if (!isConnected) {
                 showShortMsg("连接失败，请检查分辨率参数是否正确");
                 isPreview = false;
-            }else{
+            } else {
                 isPreview = true;
             }
         }
@@ -105,12 +106,12 @@ public class USBCameraActivity0 extends AppCompatActivity implements CameraDialo
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_usbcamera);
 
-        mTextureView = (View)findViewById(R.id.camera_view);
+        mTextureView = (View) findViewById(R.id.camera_view);
         mUVCCameraView = (CameraViewInterface) mTextureView;
         mUVCCameraView.setCallback(new CameraViewInterface.Callback() {
             @Override
             public void onSurfaceCreated(CameraViewInterface view, Surface surface) {
-                if(!isPreview && mUSBManager.isCameraOpened()) {
+                if (!isPreview && mUSBManager.isCameraOpened()) {
                     mUSBManager.startPreview(mUVCCameraView, new AbstractUVCCameraHandler.OnPreViewResultListener() {
                         @Override
                         public void onPreviewResult(boolean result) {
@@ -128,7 +129,7 @@ public class USBCameraActivity0 extends AppCompatActivity implements CameraDialo
 
             @Override
             public void onSurfaceDestroy(CameraViewInterface view, Surface surface) {
-                if(isPreview && mUSBManager.isCameraOpened()) {
+                if (isPreview && mUSBManager.isCameraOpened()) {
                     mUSBManager.stopPreview();
                     isPreview = false;
                 }
@@ -136,7 +137,7 @@ public class USBCameraActivity0 extends AppCompatActivity implements CameraDialo
         });
         // 初始化引擎
         mUSBManager = USBCameraManager.getInstance();
-        mUSBManager.initUSBMonitor(this,listener);
+        mUSBManager.initUSBMonitor(this, listener);
         mUSBManager.createUVCCamera(mUVCCameraView);
     }
 
@@ -144,7 +145,7 @@ public class USBCameraActivity0 extends AppCompatActivity implements CameraDialo
     @Override
     protected void onStart() {
         super.onStart();
-        if(mUSBManager == null)
+        if (mUSBManager == null)
             return;
         // 注册USB事件广播监听器
         mUSBManager.registerUSB();
@@ -155,7 +156,7 @@ public class USBCameraActivity0 extends AppCompatActivity implements CameraDialo
     protected void onStop() {
         super.onStop();
         // 注销USB事件广播监听器
-        if(mUSBManager != null){
+        if (mUSBManager != null) {
             mUSBManager.unregisterUSB();
         }
         mUVCCameraView.onPause();
@@ -164,10 +165,11 @@ public class USBCameraActivity0 extends AppCompatActivity implements CameraDialo
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if(mUSBManager != null){
+        if (mUSBManager != null) {
             mUSBManager.release();
-            L.e(TAG,"onDestroy");
+            L.e(TAG, "onDestroy");
         }
+        mUVCCameraView = null;
         sm.unregisterListener(this);
     }
 
@@ -193,7 +195,7 @@ public class USBCameraActivity0 extends AppCompatActivity implements CameraDialo
 
     @Override
     public void onDialogResult(boolean canceled) {
-        if(canceled){
+        if (canceled) {
             showShortMsg("取消操作");
         }
     }
@@ -254,28 +256,29 @@ public class USBCameraActivity0 extends AppCompatActivity implements CameraDialo
 
             timestamp = event.timestamp;
 
-            L.e(TAG,"axis_x_degree=" + String.valueOf(180 * degree_X / Math.PI));
-            L.e(TAG,"axis_y_degree=" + String.valueOf(180 * degree_Y / Math.PI));
-            L.e(TAG,"axis_z_degree=" + String.valueOf(180 * degree_Z / Math.PI));
+            L.e(TAG, "axis_x_degree=" + String.valueOf(180 * degree_X / Math.PI));
+            L.e(TAG, "axis_y_degree=" + String.valueOf(180 * degree_Y / Math.PI));
+            L.e(TAG, "axis_z_degree=" + String.valueOf(180 * degree_Z / Math.PI));
 
-
-            if (180 * degree_X / Math.PI > 40  && 180 * degree_X / Math.PI < 50) {
-                if(mUSBManager == null || ! mUSBManager.isCameraOpened()){
+            if (180 * degree_X / Math.PI > 40 && 180 * degree_X / Math.PI < 50) {
+                if (mUSBManager == null || !mUSBManager.isCameraOpened()) {
                     showShortMsg("抓拍异常，摄像头未开启");
                     return;
                 }
-                String picPath = USBCameraManager.ROOT_PATH + "_0_" + System.currentTimeMillis()
+                String picPath = USBCameraManager.ROOT_PATH + "camera0"
                         + USBCameraManager.SUFFIX_PNG;
                 mUSBManager.capturePicture(picPath, new AbstractUVCCameraHandler.OnCaptureListener() {
                     @Override
                     public void onCaptureResult(String path) {
-                        showShortMsg("保存路径："+path);
-                        if(mUSBManager != null){
+                        showShortMsg("USBCameraActivity0  保存路径：" + path);
+                        if (mUSBManager != null) {
                             mUSBManager.unregisterUSB();
                             mUSBManager.closeCamera();
                             mUSBManager.release();
                         }
-                        USBCameraActivity0.this.setResult(RESULT_OK);
+                        Intent intent = new Intent();
+                        intent.putExtra("img0",path);
+                        USBCameraActivity0.this.setResult(RESULT_OK,intent);
                         USBCameraActivity0.this.finish();
                     }
                 });

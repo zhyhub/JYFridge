@@ -263,6 +263,10 @@ public class VoiceService extends AccessibilityService {
                 FlowerCollector.onEvent(VoiceService.this, "tts_play");
                 // 设置参数
                 setTtsParam();
+
+                if(mTts.isSpeaking()){
+                    mTts.stopSpeaking();
+                }
                 int code = mTts.startSpeaking("有什么吩咐", mTtsListener);
                 /*
                  * 只保存音频不进行播放接口,调用此接口请注释startSpeaking接口

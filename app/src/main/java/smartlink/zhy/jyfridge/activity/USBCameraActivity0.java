@@ -1,5 +1,6 @@
 package smartlink.zhy.jyfridge.activity;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -8,6 +9,8 @@ import android.hardware.SensorManager;
 import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Surface;
@@ -20,6 +23,21 @@ import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.usb.common.AbstractUVCCameraHandler;
 import com.serenegiant.usb.widget.CameraViewInterface;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Interceptor;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.logging.HttpLoggingInterceptor;
 import smartlink.zhy.jyfridge.ConstantPool;
 import smartlink.zhy.jyfridge.R;
 import smartlink.zhy.jyfridge.utils.L;
@@ -50,6 +68,25 @@ public class USBCameraActivity0 extends AppCompatActivity implements CameraDialo
     private static final float NS2S = 1.0f / 1000000000.0f;
     private float timestamp;
     float dT;
+
+    private int isTake = 0;
+
+    private OkHttpClient client = new OkHttpClient.Builder()
+            .addNetworkInterceptor(new HttpLoggingInterceptor(new HttpLoggingInterceptor.Logger() {
+                @Override
+                public void log(String message) {
+                    L.e(TAG, message);
+                }
+            }).setLevel(HttpLoggingInterceptor.Level.BODY))
+            .addInterceptor(new Interceptor() {
+                @Override
+                public Response intercept(@NonNull Chain chain) throws IOException {
+                    okhttp3.Request request = chain.request().newBuilder()
+                            .build();
+                    return chain.proceed(request);
+                }
+            })
+            .build();
 
     /**
      * USB设备事件监听器
@@ -100,7 +137,6 @@ public class USBCameraActivity0 extends AppCompatActivity implements CameraDialo
         }
     };
 
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -140,7 +176,6 @@ public class USBCameraActivity0 extends AppCompatActivity implements CameraDialo
         mUSBManager.initUSBMonitor(this, listener);
         mUSBManager.createUVCCamera(mUVCCameraView);
     }
-
 
     @Override
     protected void onStart() {
@@ -257,31 +292,28 @@ public class USBCameraActivity0 extends AppCompatActivity implements CameraDialo
             timestamp = event.timestamp;
 
             L.e(TAG, "axis_x_degree=" + String.valueOf(180 * degree_X / Math.PI));
-            L.e(TAG, "axis_y_degree=" + String.valueOf(180 * degree_Y / Math.PI));
-            L.e(TAG, "axis_z_degree=" + String.valueOf(180 * degree_Z / Math.PI));
+//            L.e(TAG, "axis_y_degree=" + String.valueOf(180 * degree_Y / Math.PI));
+//            L.e(TAG, "axis_z_degree=" + String.valueOf(180 * degree_Z / Math.PI));
 
-            if (180 * degree_X / Math.PI > 40 && 180 * degree_X / Math.PI < 50) {
-                if (mUSBManager == null || !mUSBManager.isCameraOpened()) {
-                    showShortMsg("抓拍异常，摄像头未开启");
-                    return;
-                }
-                String picPath = USBCameraManager.ROOT_PATH + "camera0"
-                        + USBCameraManager.SUFFIX_PNG;
-                mUSBManager.capturePicture(picPath, new AbstractUVCCameraHandler.OnCaptureListener() {
-                    @Override
-                    public void onCaptureResult(String path) {
-                        showShortMsg("USBCameraActivity0  保存路径：" + path);
-                        if (mUSBManager != null) {
-                            mUSBManager.unregisterUSB();
-                            mUSBManager.closeCamera();
-                            mUSBManager.release();
-                        }
-                        Intent intent = new Intent();
-                        intent.putExtra("img0",path);
-                        USBCameraActivity0.this.setResult(RESULT_OK,intent);
-                        USBCameraActivity0.this.finish();
+            if (180 * degree_X / Math.PI > 40 && 180 * degree_X / Math.PI < 45) {
+                    if (mUSBManager == null && !mUSBManager.isCameraOpened()) {
+                        showShortMsg("抓拍异常，摄像头未开启");
+                        return;
                     }
-                });
+                    String picPath = USBCameraManager.ROOT_PATH + "camera0"
+                            + USBCameraManager.SUFFIX_PNG;
+                    mUSBManager.capturePicture(picPath, new AbstractUVCCameraHandler.OnCaptureListener() {
+                        @Override
+                        public void onCaptureResult(final String path) {
+                            showShortMsg("USBCameraActivity0  保存路径：" + path);
+                            if (mUSBManager != null) {
+                                mUSBManager.unregisterUSB();
+                                mUSBManager.closeCamera();
+                                mUSBManager.release();
+                            }
+                            upLoadImg(path, 1);
+                        }
+                    });
             }
         }
     }
@@ -291,4 +323,42 @@ public class USBCameraActivity0 extends AppCompatActivity implements CameraDialo
 
     }
 
+    /**
+     * 上传多张图片
+     *
+     * @param imgUrls 图片集合   正常开关门情况下有四张图片    每天凌晨自动拍照只有三张  img0冰箱门上的不会有
+     */
+    private void upLoadImg(final String imgUrls, int place) {
+
+        MediaType MEDIA_TYPE_PNG = MediaType.parse("image/png");
+
+        MultipartBody.Builder builder = new MultipartBody.Builder().setType(MultipartBody.FORM);
+
+        File f = new File(imgUrls);
+
+        builder.addFormDataPart("img1", f.getName(), RequestBody.create(MEDIA_TYPE_PNG, f))
+                .addFormDataPart("img.pid", "123456")
+                .addFormDataPart("place", String.valueOf(place));
+
+        MultipartBody requestBody = builder.build();
+
+        final Request request = new Request.Builder()
+                .url(ConstantPool.UpLoadInfo)
+                .post(requestBody)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                L.e(TAG, "img0 请求失败   " + call.request().toString() + e.toString());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                L.e(TAG, "img0 请求成功   " + response.toString());
+                USBCameraActivity0.this.setResult(RESULT_OK);
+                USBCameraActivity0.this.finish();
+            }
+        });
+    }
 }

@@ -46,19 +46,6 @@ public class MainActivity extends AppCompatActivity {
 
     private Handler handler = new Handler();
 
-    private OkHttpClient client = new OkHttpClient.Builder()
-            .addInterceptor(new Interceptor() {
-                @Override
-                public Response intercept(Chain chain) throws IOException {
-                    okhttp3.Request request = chain.request().newBuilder()
-                            .build();
-                    return chain.proceed(request);
-                }
-            })
-            .build();
-
-    private List<String> imgUrls = new ArrayList<>();
-
     private class MainReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -108,9 +95,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
-            if (data != null) {
                 switch (requestCode) {
                     case ConstantPool.Camera_0:
+                        L.e(TAG, "USBCameraActivity0  关闭了  ");
 //                    L.e(TAG,"USBCameraActivity0  关闭了  打开USBCameraActivity1");
 //                    handler.postDelayed(new Runnable() {
 //                        @Override
@@ -118,11 +105,9 @@ public class MainActivity extends AppCompatActivity {
 //                            startCamera_1();
 //                        }
 //                    },2000);
-                        imgUrls.add(data.getStringExtra("img0"));
                         break;
                     case ConstantPool.Camera_1:
                         L.e(TAG, "USBCameraActivity1  关闭了  打开USBCameraActivity2");
-                        imgUrls.add(data.getStringExtra("img1"));
                         handler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
@@ -132,7 +117,6 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case ConstantPool.Camera_2:
                         L.e(TAG, "USBCameraActivity2  关闭了  打开USBCameraActivity3");
-                        imgUrls.add(data.getStringExtra("img2"));
                         handler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
@@ -141,75 +125,16 @@ public class MainActivity extends AppCompatActivity {
                         }, 2000);
                         break;
                     case ConstantPool.Camera_3:
-                        L.e(TAG, "USBCameraActivity3  关闭了   准备上传图片");
-                        imgUrls.add(data.getStringExtra("img3"));
-                        mHandler.sendEmptyMessage(ConstantPool.Camera_3);
+                        L.e(TAG, "USBCameraActivity3  关闭了   ");
                         break;
                 }
             }
         }
-    }
-
-    @SuppressLint("HandlerLeak")
-    private Handler mHandler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case ConstantPool.Camera_3:
-                    if (imgUrls != null && imgUrls.size() != 0) {
-                        upLoadImg(imgUrls);
-                    }
-                    break;
-            }
-        }
-    };
-
-    /**
-     * 上传多张图片
-     *
-     * @param imgUrls 图片集合   正常开关门情况下有四张图片    每天凌晨自动拍照只有三张  img0冰箱门上的不会有
-     */
-    private void upLoadImg(final List<String> imgUrls) {
-
-        L.e(TAG,"图片数量   "+imgUrls.size() + "");
-
-        MediaType MEDIA_TYPE_PNG = MediaType.parse("image/png");
-        MultipartBody.Builder builder = new MultipartBody.Builder().setType(MultipartBody.FORM);
-
-        if (imgUrls.size() != 0) {
-            for (int i = 0; i < imgUrls.size(); i++) {
-                File f = new File(imgUrls.get(i));
-                builder.addFormDataPart("imgs", f.getName(), RequestBody.create(MEDIA_TYPE_PNG, f));
-            }
-            builder.addFormDataPart("img.pid", "123456");
-        }
-
-        MultipartBody requestBody = builder.build();
-
-        Request request = new Request.Builder()
-                .url(ConstantPool.UpLoadInfo)
-                .post(requestBody)
-                .build();
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                L.e(TAG, "请求失败   " + e.getMessage());
-                imgUrls.clear();
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                L.e(TAG, "请求成功   " + response.toString());
-                imgUrls.clear();
-            }
-        });
-    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        client = new OkHttpClient();
         mainReceiver = new MainReceiver();
         registerReceiver(mainReceiver, new IntentFilter("smartlink.zhy.jyfridge.service"));
 

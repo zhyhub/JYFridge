@@ -7,27 +7,19 @@ package smartlink.zhy.jyfridge.bean;
 
 public class BaseEntity {
 
+    private int volume;
     private String msg;
     private int code;
     private byte[] data;
-    private boolean suceess;
     private String text;
     private int type;
 
-    public byte[] getData() {
-        return data;
+    public int getVolume() {
+        return volume;
     }
 
-    public void setData(byte[] data) {
-        this.data = data;
-    }
-
-    public int getType() {
-        return type;
-    }
-
-    public void setType(int type) {
-        this.type = type;
+    public void setVolume(int volume) {
+        this.volume = volume;
     }
 
     public String getMsg() {
@@ -46,12 +38,12 @@ public class BaseEntity {
         this.code = code;
     }
 
-    public boolean isSuceess() {
-        return suceess;
+    public byte[] getData() {
+        return data;
     }
 
-    public void setSuceess(boolean suceess) {
-        this.suceess = suceess;
+    public void setData(byte[] data) {
+        this.data = data;
     }
 
     public String getText() {
@@ -60,5 +52,13 @@ public class BaseEntity {
 
     public void setText(String text) {
         this.text = text;
+    }
+
+    public int getType() {
+        return type;
+    }
+
+    public void setType(int type) {
+        this.type = type;
     }
 }

@@ -3,13 +3,14 @@ package smartlink.zhy.jyfridge.service;
 import android.accessibilityservice.AccessibilityService;
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
-import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.iflytek.cloud.ErrorCode;
@@ -57,6 +58,14 @@ public class VoiceService extends AccessibilityService {
     private String mEngineType = SpeechConstant.TYPE_CLOUD;
 
     private SpeechSynthesizer mTts;
+
+    /**
+     * 音量控制
+     */
+    private AudioManager audioManager;
+    private MediaPlayer mediaPlayer;
+    private int maxVolume, minVolume;
+    private int volume = 0;
 
     /**
      * 串口接入
@@ -141,6 +150,14 @@ public class VoiceService extends AccessibilityService {
         mIat = SpeechRecognizer.createRecognizer(VoiceService.this, mInitListener);
         mTts = SpeechSynthesizer.createSynthesizer(VoiceService.this, mTtsInitListener);
         initUart();
+        initAudio();
+    }
+
+    private void initAudio() {
+        mediaPlayer = new MediaPlayer();
+        audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        assert audioManager != null;
+        L.e(TAG, "当前音量    " + audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) + "  最大音量  " + audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
     }
 
     /**
@@ -250,7 +267,8 @@ public class VoiceService extends AccessibilityService {
 
     /**
      * 讯飞唤醒监听
-     * @param event  监听事件
+     *
+     * @param event 监听事件
      * @return
      */
     @Override
@@ -264,7 +282,7 @@ public class VoiceService extends AccessibilityService {
                 // 设置参数
                 setTtsParam();
 
-                if(mTts.isSpeaking()){
+                if (mTts.isSpeaking()) {
                     mTts.stopSpeaking();
                 }
                 int code = mTts.startSpeaking("有什么吩咐", mTtsListener);
@@ -319,7 +337,7 @@ public class VoiceService extends AccessibilityService {
                 // TODO 最后的结果
                 L.e(TAG, "msg    " + msg);
                 if (!msg.equals("")) {
-                    sendMsg(msg);
+                    sendMsg(msg, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC), audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
                 }
             }
         }
@@ -336,8 +354,9 @@ public class VoiceService extends AccessibilityService {
 
     /**
      * 拼接语音
-     * @param results  讯飞识别返回的结果
-     * @return   返回拼接的结果
+     *
+     * @param results 讯飞识别返回的结果
+     * @return 返回拼接的结果
      */
     private String printResult(RecognizerResult results) {
         L.e(TAG, "printResult");
@@ -434,10 +453,12 @@ public class VoiceService extends AccessibilityService {
 
 //=============================================================  下面是请求海知语音获取意图  ======================================================================================================
 
-    private void sendMsg(String txt) {
-        L.e(TAG, "  sendMsg   " + Arrays.toString(sendData));
+    private void sendMsg(String txt, int currentVolume, final int maxVolume) {
+        L.e(TAG, "  sendMsg   " + Arrays.toString(sendData) + "   currentVolume   " + currentVolume + "   maxVolume   " + maxVolume);
         BaseOkHttpClient.newBuilder()
                 .addParam("q", txt)
+                .addParam("currentVolume", currentVolume)
+                .addParam("maxVolume", maxVolume)
                 .addParam("data", Arrays.toString(sendData))
                 .addParam("user_id", "123456")
                 .get()
@@ -449,12 +470,17 @@ public class VoiceService extends AccessibilityService {
                 Gson gson = new Gson();
                 BaseEntity entity = gson.fromJson(o.toString(), BaseEntity.class);
                 if (entity.getCode() == 1) {
-                    if (entity.getType() == 1) {
-                        if (!entity.isSuceess()) {
+                    switch (entity.getType()) {
+                        case 0://不操作指令
+                            break;
+                        case 1://冰箱操作
                             if (entity.getData() != null && entity.getData().length != 0) {
                                 writeTTyDevice(fid, entity.getData());
                             }
-                        }
+                            break;
+                        case 2://音量操作
+                            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, entity.getVolume(), 0);
+                            break;
                     }
                     if (!entity.getText().equals("")) {
                         mTts.startSpeaking(entity.getText(), mTtsListener);
@@ -474,9 +500,6 @@ public class VoiceService extends AccessibilityService {
             }
         });
     }
-
-//=============================================================  上面是请求海知语音获取意图  ======================================================================================================
-
 
 //=============================================================  下面是串口调用逻辑  ======================================================================================================
 
@@ -620,6 +643,7 @@ public class VoiceService extends AccessibilityService {
         }
     }
 
-//=============================================================  上面是串口调用逻辑  ======================================================================================================
+//=============================================================  下面是控制音量逻辑  ======================================================================================================
+
 
 }

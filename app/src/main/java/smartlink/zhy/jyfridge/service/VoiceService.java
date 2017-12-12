@@ -336,9 +336,22 @@ public class VoiceService extends AccessibilityService {
             if (isLast) {
                 // TODO 最后的结果
                 L.e(TAG, "msg    " + msg);
+//                if (msg.equals("打开灯。")) {
+//                    DATA_2 = ConstantPool.Data2_Modify_Mode;
+//                    DATA_9 = 0x10;
+//                    sendByte();
+//                }
                 if (!msg.equals("")) {
                     sendMsg(msg, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC), audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
                 }
+//                else if(msg.equals("关闭灯。")){
+//                    DATA_2 = ConstantPool.Data2_Modify_Mode;
+//                    DATA_9 = 0x00;
+//                    sendByte();
+//                }
+
+
+
             }
         }
 
@@ -539,6 +552,7 @@ public class VoiceService extends AccessibilityService {
                 + DATA_15 + DATA_16 + DATA_17 + DATA_18 + DATA_19 + DATA_20 + DATA_21 + DATA_22);
         data = new byte[]{DATA_0, DATA_1, DATA_2, DATA_3, DATA_4, DATA_5, DATA_6, DATA_7, DATA_8, DATA_9, DATA_10, DATA_11, DATA_12, DATA_13, DATA_14, DATA_15, DATA_16, DATA_17, DATA_18, DATA_19, DATA_20, DATA_21, DATA_22, DATA_23};
         writeTTyDevice(fid, data);
+        L.e(TAG,"sendByte  " + Arrays.toString(data));
     }
 
     private boolean isSet = false;
@@ -607,7 +621,7 @@ public class VoiceService extends AccessibilityService {
             }
 
             MODE = sendData[2];
-            Log.e("TTTTTTTTT MODE = ", MODE + "");
+            Log.e("TTTTTTTTT MODE = ", MODE + "    " + sendData[9]);
 
             if ((sendData[4] & 0x01) != 0) {
 //                L.e(TAG, "冷藏室门   开了");

@@ -474,6 +474,7 @@ public class VoiceService extends AccessibilityService {
                 .addParam("maxVolume", maxVolume)
                 .addParam("data", Arrays.toString(sendData))
                 .addParam("user_id", "123456")
+                .addParam("refrigeratorId", "1")
                 .get()
                 .url(ConstantPool.AI)
                 .build().enqueue(new BaseCallBack() {

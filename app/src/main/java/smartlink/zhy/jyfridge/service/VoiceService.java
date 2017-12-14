@@ -1,13 +1,17 @@
 package smartlink.zhy.jyfridge.service;
 
 import android.accessibilityservice.AccessibilityService;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.AudioManager;
-import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
@@ -27,17 +31,26 @@ import com.signway.SignwayManager;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.litepal.crud.DataSupport;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.Socket;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import okhttp3.Call;
 import smartlink.zhy.jyfridge.ConstantPool;
 import smartlink.zhy.jyfridge.R;
 import smartlink.zhy.jyfridge.bean.BaseEntity;
+import smartlink.zhy.jyfridge.bean.RemindBean;
 import smartlink.zhy.jyfridge.json.JsonParser;
 import smartlink.zhy.jyfridge.utils.BaseCallBack;
 import smartlink.zhy.jyfridge.utils.BaseOkHttpClient;
@@ -50,6 +63,11 @@ import smartlink.zhy.jyfridge.utils.L;
 public class VoiceService extends AccessibilityService {
 
     private static String TAG = VoiceService.class.getSimpleName();
+
+    //行程提醒广播
+    private AlarmReceiver alarmReceiver;
+    private int requestCode = 0;
+
     // 语音听写对象
     private SpeechRecognizer mIat;
     // 用HashMap存储听写结果
@@ -63,9 +81,6 @@ public class VoiceService extends AccessibilityService {
      * 音量控制
      */
     private AudioManager audioManager;
-    private MediaPlayer mediaPlayer;
-    private int maxVolume, minVolume;
-    private int volume = 0;
 
     /**
      * 串口接入
@@ -99,8 +114,6 @@ public class VoiceService extends AccessibilityService {
     private byte DATA_21 = ConstantPool.Zero;
     private byte DATA_22 = ConstantPool.Zero;
     private byte DATA_23;
-
-
     private byte DATA_24 = ConstantPool.Zero;
     private byte DATA_25 = ConstantPool.Zero;
     private byte DATA_26 = ConstantPool.Zero;
@@ -141,20 +154,38 @@ public class VoiceService extends AccessibilityService {
 
     int readLength;
     int fid = -1;
+    AlarmManager am;
 
     @Override
     public void onCreate() {
         super.onCreate();
+        createSocket("192.168.100.1", 8888);
+        am = (AlarmManager) VoiceService.this.getSystemService(Context.ALARM_SERVICE);
+        alarmReceiver = new AlarmReceiver();
+        registerReceiver(alarmReceiver, new IntentFilter("smartlink.zhy.jyfridge.RING"));
+
         // 初始化识别无UI识别对象
         // 使用SpeechRecognizer对象，可根据回调消息自定义界面；
         mIat = SpeechRecognizer.createRecognizer(VoiceService.this, mInitListener);
         mTts = SpeechSynthesizer.createSynthesizer(VoiceService.this, mTtsInitListener);
         initUart();
         initAudio();
+
+        List<RemindBean> remindBeanList = DataSupport.select("triggerAtMillis").where("triggerAtMillis >= ?", String.valueOf(System.currentTimeMillis())).find(RemindBean.class);
+
+        if (remindBeanList.size() > 0) {
+            for (RemindBean remindBean : remindBeanList) {
+                Intent intent = new Intent();
+                intent.setAction("smartlink.zhy.jyfridge.RING");
+                intent.putExtra("time", remindBean.getTriggerAtMillis());
+                PendingIntent pendingIntent = PendingIntent.getBroadcast(VoiceService.this, requestCode, intent, 0);
+                am.set(AlarmManager.RTC_WAKEUP, remindBean.getTriggerAtMillis(), pendingIntent);
+                requestCode++;
+            }
+        }
     }
 
     private void initAudio() {
-        mediaPlayer = new MediaPlayer();
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         assert audioManager != null;
         L.e(TAG, "当前音量    " + audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) + "  最大音量  " + audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
@@ -351,7 +382,6 @@ public class VoiceService extends AccessibilityService {
 //                }
 
 
-
             }
         }
 
@@ -457,14 +487,17 @@ public class VoiceService extends AccessibilityService {
 
     @Override
     public void onDestroy() {
+        unregisterReceiver(alarmReceiver);
         Intent sevice = new Intent(this, VoiceService.class);
         this.startService(sevice);
-        super.onDestroy();
         writeHandler.removeCallbacks(writeUpdate);//停止指令
         readHandler.removeCallbacks(readUpdate);//停止指令
+        requestCode = 0;
+        closeSocket();
+        super.onDestroy();
     }
 
-//=============================================================  下面是请求海知语音获取意图  ======================================================================================================
+//=============================================================  下面是请求海知语音获取意图 并做相应的指令操作 ======================================================================================================
 
     private void sendMsg(String txt, int currentVolume, final int maxVolume) {
         L.e(TAG, "  sendMsg   " + Arrays.toString(sendData) + "   currentVolume   " + currentVolume + "   maxVolume   " + maxVolume);
@@ -495,6 +528,41 @@ public class VoiceService extends AccessibilityService {
                         case 2://音量操作
                             audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, entity.getVolume(), 0);
                             break;
+                        case 3://日程提醒
+                            RemindBean remindBean = new RemindBean();
+                            remindBean.setTriggerAtMillis(entity.getTime_start());
+                            remindBean.setMsg(entity.getDetails());
+                            remindBean.save();
+                            if (remindBean.save()) {
+                                L.e(TAG, "Connector   存储成功");
+                            } else {
+                                L.e(TAG, "Connector   存储失败");
+                            }
+                            Intent intent = new Intent();
+                            intent.setAction("smartlink.zhy.jyfridge.RING");
+                            intent.putExtra("time", entity.getTime_start());
+                            PendingIntent pendingIntent = PendingIntent.getBroadcast(VoiceService.this, requestCode, intent, 0);
+                            am.set(AlarmManager.RTC_WAKEUP, entity.getTime_start(), pendingIntent);
+                            requestCode++;
+                            break;
+                        case 101://启动-手机无线充电设备
+                            break;
+                        case 102://关闭-手机无线充电设备
+                            break;
+                        case 103://启动-台灯无线充电设备
+                            break;
+                        case 104://关闭-台灯无线充电设备
+                            break;
+                        case 105://启动-窗帘
+                            break;
+                        case 106://关闭-窗帘
+                            break;
+                        case 107://启动-电灯
+                            sendData("{\"sourceId\":\"009569B4662A\",\"requestType\":\"cmd\",\"serialNum\":-1,\"id\":\"00124B000B277AD8\",\"attributes\":{\"TYP\":\"LT-CTM\",\"WIN\":\"ON\"}}");
+                            break;
+                        case 108://关闭-电灯
+                            sendData("{\"sourceId\":\"009569B4662A\",\"requestType\":\"cmd\",\"serialNum\":-1,\"id\":\"00124B000B277AD8\",\"attributes\":{\"TYP\":\"LT-CTM\",\"WIN\":\"OFF\"}}");
+                            break;
                     }
                     if (!entity.getText().equals("")) {
                         mTts.startSpeaking(entity.getText(), mTtsListener);
@@ -510,7 +578,7 @@ public class VoiceService extends AccessibilityService {
 
             @Override
             public void onFailure(Call call, IOException e) {
-                L.e(TAG, "onFailure");
+                L.e(TAG, "onFailure" + e.getMessage());
             }
         });
     }
@@ -553,7 +621,7 @@ public class VoiceService extends AccessibilityService {
                 + DATA_15 + DATA_16 + DATA_17 + DATA_18 + DATA_19 + DATA_20 + DATA_21 + DATA_22);
         data = new byte[]{DATA_0, DATA_1, DATA_2, DATA_3, DATA_4, DATA_5, DATA_6, DATA_7, DATA_8, DATA_9, DATA_10, DATA_11, DATA_12, DATA_13, DATA_14, DATA_15, DATA_16, DATA_17, DATA_18, DATA_19, DATA_20, DATA_21, DATA_22, DATA_23};
         writeTTyDevice(fid, data);
-        L.e(TAG,"sendByte  " + Arrays.toString(data));
+        L.e(TAG, "sendByte  " + Arrays.toString(data));
     }
 
     private boolean isSet = false;
@@ -604,6 +672,7 @@ public class VoiceService extends AccessibilityService {
      * 获取最新的串口数据
      */
     private void setNewData(byte[] newData, int readLength) {
+
         if (newData != null && readLength != 0) {
             int i = 0;
             while ((newData[i] != 0x55) && (newData[i + 1] != 0xAA)) {
@@ -646,19 +715,194 @@ public class VoiceService extends AccessibilityService {
                 }
             }
             if ((sendData[4] & 0x02) != 0) {
-//                L.e(TAG, "变温室门   开了");
+//                L.e(TAG, "冷冻门   开了");
             } else {
-//                L.e(TAG, "变温室门   关了");
+//                L.e(TAG, "冷冻门   关了");
             }
             if ((sendData[4] & 0x08) != 0) {
-//                L.e(TAG, "冷冻室门   开了");
+//                L.e(TAG, "变温门   开了");
             } else {
-//                L.e(TAG, "冷冻室门   关了");
+//                L.e(TAG, "变温门   关了");
+            }
+            if ((sendData[4] & 0x40) != 0) {
+//                L.e(TAG, "红外开关   开了");
+            } else {
+//                L.e(TAG, "红外开关   关了");
             }
         }
     }
 
-//=============================================================  下面是控制音量逻辑  ======================================================================================================
+//=============================================================  下面是日程提醒调用逻辑  ======================================================================================================
 
+    private class AlarmReceiver extends BroadcastReceiver {
 
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if ("smartlink.zhy.jyfridge.RING".equals(intent.getAction())) {
+                L.e(TAG, "AlarmReceiver   时间到了  ");
+
+                long time = intent.getLongExtra("time", 0);
+
+                List<RemindBean> remindBeanList = DataSupport.select("msg").where("triggerAtMillis=?", String.valueOf(time)).find(RemindBean.class);
+
+                StringBuffer stringBuffer = new StringBuffer();
+
+                if (remindBeanList.size() > 0) {
+                    for (RemindBean r : remindBeanList) {
+                        stringBuffer = stringBuffer.append(r.getMsg()).append(",");
+                    }
+                    mTts.startSpeaking(stringBuffer.toString(), mTtsListener);
+                    L.e(TAG, "  stringBuffer  " + stringBuffer);
+
+                    DataSupport.deleteAll(RemindBean.class, "triggerAtMillis=?", String.valueOf(time));
+                }
+            }
+        }
+    }
+
+//=============================================================  下面是LierDa调用逻辑  ======================================================================================================
+
+    private Handler mMainHandler;
+    private Socket socket;
+    private ExecutorService mThreadPool;
+    private InputStream is;
+    private InputStreamReader isR;
+    private BufferedReader br;
+    private String response;
+    private OutputStream outputStream;
+    private static final int MSG_SOCKET = 1234;
+
+    protected void createSocket(final String ip, final int port) {
+        L.e(TAG, "createSocket() called with: ip = [" + ip + "], port = [" + port + "]");
+
+        //初始化线程池
+        mThreadPool = Executors.newCachedThreadPool();
+
+        //实例化主线程，用于更新接收过来的消息
+        mMainHandler = new Handler() {
+            @Override
+            public void handleMessage(Message msg) {
+                switch (msg.what) {
+                    case MSG_SOCKET:
+                        String response = (String) msg.obj;
+                        String sourceId = "";
+                        int serialNum = 0;
+                        String requestType = "";
+                        String id = "";
+                        int state = 0;
+                        try {
+                            JSONObject jsonObject = new JSONObject(response);
+                            if (jsonObject.has("stateCode")) {
+                                state = jsonObject.getInt("stateCode");
+                                serialNum = jsonObject.getInt("serialNum");
+                                sourceId = jsonObject.getString("sourceId");
+                                requestType = jsonObject.getString("requestType");
+                                id = jsonObject.getString("id");
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        if (state == 1) {
+                            L.e(TAG, "操作成功   " + "sourceId  " + sourceId + "   serialNum " + serialNum + "  requestType   " + requestType + "   id   " + id);
+                        } else {
+                            L.e(TAG, "操作失败");
+                        }
+                        break;
+                }
+            }
+        };
+
+        mThreadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    socket = new Socket(ip, port);
+                    L.e(TAG, "Socket connected? " + socket.isConnected());
+                } catch (IOException | NullPointerException e) {
+                    L.e(TAG, e.getMessage() + "     " + e);
+                }
+            }
+        });
+    }
+
+    private void closeSocket() {
+        Log.d(TAG, "closeSocket() called");
+        if (mThreadPool == null) {
+            mThreadPool = Executors.newCachedThreadPool();
+        }
+        mThreadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (outputStream != null) {
+                        outputStream.close();
+                    }
+                    if (br != null) {
+                        br.close();
+                    }
+                    if (socket != null) {
+                        socket.close();
+                        L.e(TAG, "DisConnected? " + !socket.isConnected());
+                    }
+                } catch (IOException | NullPointerException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    private void sendData(final String content) {
+        L.e(TAG, "sendData() called with: content = [" + content + "]");
+        if (mThreadPool == null) {
+            mThreadPool = Executors.newCachedThreadPool();
+        }
+        mThreadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (socket == null) {
+                        socket = new Socket("192.168.100.1", 8888);
+                    }
+                    OutputStream outputStream = socket.getOutputStream();
+                    byte buffer[] = content.getBytes();
+                    int temp = buffer.length;
+                    outputStream.write(buffer, 0, buffer.length);
+                    outputStream.flush();
+                } catch (IOException | NullPointerException e) {
+                    L.e(TAG, e.getMessage() + "    " + e);
+                }
+            }
+        });
+        receiveData();
+    }
+
+    private void receiveData() {
+        Log.d(TAG, "receiveData() called");
+        if (mThreadPool == null) {
+            mThreadPool = Executors.newCachedThreadPool();
+        }
+        mThreadPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (socket == null) {
+                        socket = new Socket("192.168.100.1", 8888);
+                    }
+                    is = socket.getInputStream();
+                    isR = new InputStreamReader(is);
+                    br = new BufferedReader(isR);
+                    response = br.readLine();
+                    L.d(TAG, "Result: " + response);
+
+                    Message msg = Message.obtain();
+                    msg.what = MSG_SOCKET;
+                    msg.obj = response;
+                    mMainHandler.sendMessage(msg);
+
+                } catch (IOException | NullPointerException e) {
+                    L.e(TAG, "操作失败" + e.getMessage() + "    " + e);
+                }
+            }
+        });
+    }
 }

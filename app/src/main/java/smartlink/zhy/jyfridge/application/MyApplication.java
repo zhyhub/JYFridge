@@ -4,13 +4,15 @@ import android.app.Application;
 
 import com.iflytek.cloud.SpeechUtility;
 
+import org.litepal.LitePalApplication;
+
 import smartlink.zhy.jyfridge.R;
 
 /**
  * Created by Administrator on 2017/11/27 0027.
  */
 
-public class MyApplication extends Application{
+public class MyApplication extends LitePalApplication{
     @Override
     public void onCreate() {
         // 应用程序入口处调用，避免手机内存过小，杀死后台进程后通过历史intent进入Activity造成SpeechUtility对象为null

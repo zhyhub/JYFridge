@@ -1,21 +1,33 @@
 package smartlink.zhy.jyfridge.activity;
 
 import android.annotation.SuppressLint;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.app.TimePickerDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.sqlite.SQLiteDatabase;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.Nullable;
+import android.support.v4.math.MathUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatButton;
+import android.util.TimeUtils;
 import android.view.View;
+import android.widget.TimePicker;
+
+import org.litepal.crud.DataSupport;
+import org.litepal.tablemanager.Connector;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +44,8 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import smartlink.zhy.jyfridge.ConstantPool;
 import smartlink.zhy.jyfridge.R;
+import smartlink.zhy.jyfridge.bean.RemindBean;
+import smartlink.zhy.jyfridge.service.VoiceService;
 import smartlink.zhy.jyfridge.utils.L;
 
 /**
@@ -95,9 +109,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
-                switch (requestCode) {
-                    case ConstantPool.Camera_0:
-                        L.e(TAG, "USBCameraActivity0  关闭了  ");
+            switch (requestCode) {
+                case ConstantPool.Camera_0:
+                    L.e(TAG, "USBCameraActivity0  关闭了  ");
 //                    L.e(TAG,"USBCameraActivity0  关闭了  打开USBCameraActivity1");
 //                    handler.postDelayed(new Runnable() {
 //                        @Override
@@ -105,36 +119,47 @@ public class MainActivity extends AppCompatActivity {
 //                            startCamera_1();
 //                        }
 //                    },2000);
-                        break;
-                    case ConstantPool.Camera_1:
-                        L.e(TAG, "USBCameraActivity1  关闭了  打开USBCameraActivity2");
-                        handler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                startCamera_2();
-                            }
-                        }, 2000);
-                        break;
-                    case ConstantPool.Camera_2:
-                        L.e(TAG, "USBCameraActivity2  关闭了  打开USBCameraActivity3");
-                        handler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                startCamera_3();
-                            }
-                        }, 2000);
-                        break;
-                    case ConstantPool.Camera_3:
-                        L.e(TAG, "USBCameraActivity3  关闭了   ");
-                        break;
-                }
+                    break;
+                case ConstantPool.Camera_1:
+                    L.e(TAG, "USBCameraActivity1  关闭了  打开USBCameraActivity2");
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            startCamera_2();
+                        }
+                    }, 2000);
+                    break;
+                case ConstantPool.Camera_2:
+                    L.e(TAG, "USBCameraActivity2  关闭了  打开USBCameraActivity3");
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            startCamera_3();
+                        }
+                    }, 2000);
+                    break;
+                case ConstantPool.Camera_3:
+                    L.e(TAG, "USBCameraActivity3  关闭了   ");
+                    break;
             }
         }
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Connector.getDatabase();
+        RemindBean remindBean = new RemindBean();
+        remindBean.setTriggerAtMillis(System.currentTimeMillis()+50 * 1000L);
+        remindBean.setMsg("起床，起床");
+        remindBean.save();
+        if (remindBean.save()) {
+            L.e(TAG, "Connector   存储成功");
+        } else {
+            L.e(TAG, "Connector   存储失败");
+        }
+
         mainReceiver = new MainReceiver();
         registerReceiver(mainReceiver, new IntentFilter("smartlink.zhy.jyfridge.service"));
 
@@ -167,6 +192,7 @@ public class MainActivity extends AppCompatActivity {
                 startCamera_3();
             }
         });
+
     }
 
     @Override

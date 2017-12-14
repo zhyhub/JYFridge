@@ -13,6 +13,24 @@ public class BaseEntity {
     private byte[] data;
     private String text;
     private int type;
+    private long time_start;
+    private String details;
+
+    public long getTime_start() {
+        return time_start;
+    }
+
+    public void setTime_start(long time_start) {
+        this.time_start = time_start;
+    }
+
+    public String getDetails() {
+        return details;
+    }
+
+    public void setDetails(String details) {
+        this.details = details;
+    }
 
     public int getVolume() {
         return volume;

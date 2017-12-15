@@ -563,57 +563,6 @@ public class VoiceService extends AccessibilityService {
                         case 104://关闭-台灯无线充电设备
                             TTS(entity);
                             break;
-                        case 105://启动-窗帘
-                            ZigbeeBean zigbeeCurtainsOpen = new ZigbeeBean();
-                            zigbeeCurtainsOpen.setSourceId("009569B4662A");
-                            zigbeeCurtainsOpen.setRequestType("cmd");
-                            zigbeeCurtainsOpen.setSerialNum(1);
-                            zigbeeCurtainsOpen.setId("00124B0009E8D140");
-
-                            ZigbeeBean.AttributesBean CurtainsOpen = new ZigbeeBean.AttributesBean();
-                            CurtainsOpen.setTYP("WD-RXJ");
-                            CurtainsOpen.setWIN("OPEN");
-
-                            zigbeeCurtainsOpen.setAttributes(CurtainsOpen);
-
-                            L.e(TAG, "ZigbeeBean  CurtainsOpen " + new Gson().toJson(zigbeeCurtainsOpen));
-                            sendData(new Gson().toJson(zigbeeCurtainsOpen));
-                            TTS(entity);
-                            break;
-                        case 106://关闭-窗帘
-                            ZigbeeBean zigbeeCurtainsClose = new ZigbeeBean();
-                            zigbeeCurtainsClose.setSourceId("009569B4662A");
-                            zigbeeCurtainsClose.setRequestType("cmd");
-                            zigbeeCurtainsClose.setSerialNum(1);
-                            zigbeeCurtainsClose.setId("00124B0009E8D140");
-
-                            ZigbeeBean.AttributesBean CurtainsClose = new ZigbeeBean.AttributesBean();
-                            CurtainsClose.setTYP("WD-RXJ");
-                            CurtainsClose.setWIN("CLOSE");
-
-                            zigbeeCurtainsClose.setAttributes(CurtainsClose);
-
-                            L.e(TAG, "ZigbeeBean  CurtainsClose " + new Gson().toJson(zigbeeCurtainsClose));
-                            sendData(new Gson().toJson(zigbeeCurtainsClose));
-                            TTS(entity);
-                            break;
-                        case 109://停止-窗帘
-                            ZigbeeBean zigbeeCurtainsStop = new ZigbeeBean();
-                            zigbeeCurtainsStop.setSourceId("009569B4662A");
-                            zigbeeCurtainsStop.setRequestType("cmd");
-                            zigbeeCurtainsStop.setSerialNum(1);
-                            zigbeeCurtainsStop.setId("00124B0009E8D140");
-
-                            ZigbeeBean.AttributesBean CurtainsStop = new ZigbeeBean.AttributesBean();
-                            CurtainsStop.setTYP("WD-RXJ");
-                            CurtainsStop.setWIN("STOP");
-
-                            zigbeeCurtainsStop.setAttributes(CurtainsStop);
-
-                            L.e(TAG, "ZigbeeBean  CurtainsStop " + new Gson().toJson(zigbeeCurtainsStop));
-                            sendData(new Gson().toJson(zigbeeCurtainsStop));
-                            TTS(entity);
-                            break;
                         case 107://启动-电灯
                             CurrentTemp = 60;
                             ZigbeeBean zigbeeOpen = new ZigbeeBean();
@@ -738,6 +687,57 @@ public class VoiceService extends AccessibilityService {
 
                             L.e(TAG, "ZigbeeBean  Min " + new Gson().toJson(zigbeeMin));
                             sendData(new Gson().toJson(zigbeeMin));
+                            TTS(entity);
+                            break;
+                        case 105://启动-窗帘
+                            ZigbeeBean zigbeeCurtainsOpen = new ZigbeeBean();
+                            zigbeeCurtainsOpen.setSourceId("009569B4662A");
+                            zigbeeCurtainsOpen.setRequestType("cmd");
+                            zigbeeCurtainsOpen.setSerialNum(-1);
+                            zigbeeCurtainsOpen.setId("00124B0009E8D140");
+
+                            ZigbeeBean.AttributesBean CurtainsOpen = new ZigbeeBean.AttributesBean();
+                            CurtainsOpen.setTYP("WD-RXJ");
+                            CurtainsOpen.setWIN("OPEN");
+
+                            zigbeeCurtainsOpen.setAttributes(CurtainsOpen);
+
+                            L.e(TAG, "ZigbeeBean  CurtainsOpen " + new Gson().toJson(zigbeeCurtainsOpen));
+                            sendData(new Gson().toJson(zigbeeCurtainsOpen));
+                            TTS(entity);
+                            break;
+                        case 106://关闭-窗帘
+                            ZigbeeBean zigbeeCurtainsClose = new ZigbeeBean();
+                            zigbeeCurtainsClose.setSourceId("009569B4662A");
+                            zigbeeCurtainsClose.setRequestType("cmd");
+                            zigbeeCurtainsClose.setSerialNum(1);
+                            zigbeeCurtainsClose.setId("00124B0009E8D140");
+
+                            ZigbeeBean.AttributesBean CurtainsClose = new ZigbeeBean.AttributesBean();
+                            CurtainsClose.setTYP("WD-RXJ");
+                            CurtainsClose.setWIN("CLOSE");
+
+                            zigbeeCurtainsClose.setAttributes(CurtainsClose);
+
+                            L.e(TAG, "ZigbeeBean  CurtainsClose " + new Gson().toJson(zigbeeCurtainsClose));
+                            sendData(new Gson().toJson(zigbeeCurtainsClose));
+                            TTS(entity);
+                            break;
+                        case 109://停止-窗帘
+                            ZigbeeBean zigbeeCurtainsStop = new ZigbeeBean();
+                            zigbeeCurtainsStop.setSourceId("009569B4662A");
+                            zigbeeCurtainsStop.setRequestType("cmd");
+                            zigbeeCurtainsStop.setSerialNum(1);
+                            zigbeeCurtainsStop.setId("00124B0009E8D140");
+
+                            ZigbeeBean.AttributesBean CurtainsStop = new ZigbeeBean.AttributesBean();
+                            CurtainsStop.setTYP("WD-RXJ");
+                            CurtainsStop.setWIN("STOP");
+
+                            zigbeeCurtainsStop.setAttributes(CurtainsStop);
+
+                            L.e(TAG, "ZigbeeBean  CurtainsStop " + new Gson().toJson(zigbeeCurtainsStop));
+                            sendData(new Gson().toJson(zigbeeCurtainsStop));
                             TTS(entity);
                             break;
                     }
@@ -970,22 +970,24 @@ public class VoiceService extends AccessibilityService {
                         String requestType = "";
                         String id = "";
                         int state = 0;
-                        try {
-                            JSONObject jsonObject = new JSONObject(response);
-                            if (jsonObject.has("stateCode")) {
-                                state = jsonObject.getInt("stateCode");
-                                serialNum = jsonObject.getInt("serialNum");
-                                sourceId = jsonObject.getString("sourceId");
-                                requestType = jsonObject.getString("requestType");
-                                id = jsonObject.getString("id");
+                        if ("".equals(response)) {
+                            try {
+                                JSONObject jsonObject = new JSONObject(response);
+                                if (jsonObject.has("stateCode")) {
+                                    state = jsonObject.getInt("stateCode");
+                                    serialNum = jsonObject.getInt("serialNum");
+                                    sourceId = jsonObject.getString("sourceId");
+                                    requestType = jsonObject.getString("requestType");
+                                    id = jsonObject.getString("id");
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
                             }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        if (state == 1) {
-                            L.e(TAG, "操作成功   " + "sourceId  " + sourceId + "   serialNum " + serialNum + "  requestType   " + requestType + "   id   " + id);
-                        } else {
-                            L.e(TAG, "操作失败");
+                            if (state == 1) {
+                                L.e(TAG, "操作成功   " + "sourceId  " + sourceId + "   serialNum " + serialNum + "  requestType   " + requestType + "   id   " + id);
+                            } else {
+                                L.e(TAG, "操作失败");
+                            }
                         }
                         break;
                 }

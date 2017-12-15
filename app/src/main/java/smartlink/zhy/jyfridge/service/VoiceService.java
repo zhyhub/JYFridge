@@ -51,6 +51,7 @@ import smartlink.zhy.jyfridge.ConstantPool;
 import smartlink.zhy.jyfridge.R;
 import smartlink.zhy.jyfridge.bean.BaseEntity;
 import smartlink.zhy.jyfridge.bean.RemindBean;
+import smartlink.zhy.jyfridge.bean.ZigbeeBean;
 import smartlink.zhy.jyfridge.json.JsonParser;
 import smartlink.zhy.jyfridge.utils.BaseCallBack;
 import smartlink.zhy.jyfridge.utils.BaseOkHttpClient;
@@ -89,6 +90,8 @@ public class VoiceService extends AccessibilityService {
     private boolean isOpen = false;
 
     private byte MODE;
+
+    private static int CurrentTemp = 0;
 
     private byte DATA_0 = ConstantPool.Data0_beginning_commend;
     private byte DATA_1 = ConstantPool.Data1_beginning_commend;
@@ -169,7 +172,10 @@ public class VoiceService extends AccessibilityService {
         mIat = SpeechRecognizer.createRecognizer(VoiceService.this, mInitListener);
         mTts = SpeechSynthesizer.createSynthesizer(VoiceService.this, mTtsInitListener);
         initUart();
-        initAudio();
+
+        audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        assert audioManager != null;
+        L.e(TAG, "当前音量    " + audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) + "  最大音量  " + audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
 
         List<RemindBean> remindBeanList = DataSupport.select("triggerAtMillis").where("triggerAtMillis >= ?", String.valueOf(System.currentTimeMillis())).find(RemindBean.class);
 
@@ -182,13 +188,9 @@ public class VoiceService extends AccessibilityService {
                 am.set(AlarmManager.RTC_WAKEUP, remindBean.getTriggerAtMillis(), pendingIntent);
                 requestCode++;
             }
-        }
-    }
 
-    private void initAudio() {
-        audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        assert audioManager != null;
-        L.e(TAG, "当前音量    " + audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) + "  最大音量  " + audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
+            L.e(TAG, "还有没有过期的日程提醒");
+        }
     }
 
     /**
@@ -519,14 +521,17 @@ public class VoiceService extends AccessibilityService {
                 if (entity.getCode() == 1) {
                     switch (entity.getType()) {
                         case 0://不操作指令
+                            TTS(entity);
                             break;
                         case 1://冰箱操作
                             if (entity.getData() != null && entity.getData().length != 0) {
                                 writeTTyDevice(fid, entity.getData());
+                                TTS(entity);
                             }
                             break;
                         case 2://音量操作
                             audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, entity.getVolume(), 0);
+                            TTS(entity);
                             break;
                         case 3://日程提醒
                             RemindBean remindBean = new RemindBean();
@@ -544,28 +549,197 @@ public class VoiceService extends AccessibilityService {
                             PendingIntent pendingIntent = PendingIntent.getBroadcast(VoiceService.this, requestCode, intent, 0);
                             am.set(AlarmManager.RTC_WAKEUP, entity.getTime_start(), pendingIntent);
                             requestCode++;
+                            TTS(entity);
                             break;
                         case 101://启动-手机无线充电设备
+                            TTS(entity);
                             break;
                         case 102://关闭-手机无线充电设备
+                            TTS(entity);
                             break;
                         case 103://启动-台灯无线充电设备
+                            TTS(entity);
                             break;
                         case 104://关闭-台灯无线充电设备
+                            TTS(entity);
                             break;
                         case 105://启动-窗帘
+                            ZigbeeBean zigbeeCurtainsOpen = new ZigbeeBean();
+                            zigbeeCurtainsOpen.setSourceId("009569B4662A");
+                            zigbeeCurtainsOpen.setRequestType("cmd");
+                            zigbeeCurtainsOpen.setSerialNum(1);
+                            zigbeeCurtainsOpen.setId("00124B0009E8D140");
+
+                            ZigbeeBean.AttributesBean CurtainsOpen = new ZigbeeBean.AttributesBean();
+                            CurtainsOpen.setTYP("WD-RXJ");
+                            CurtainsOpen.setWIN("OPEN");
+
+                            zigbeeCurtainsOpen.setAttributes(CurtainsOpen);
+
+                            L.e(TAG, "ZigbeeBean  CurtainsOpen " + new Gson().toJson(zigbeeCurtainsOpen));
+                            sendData(new Gson().toJson(zigbeeCurtainsOpen));
+                            TTS(entity);
                             break;
                         case 106://关闭-窗帘
+                            ZigbeeBean zigbeeCurtainsClose = new ZigbeeBean();
+                            zigbeeCurtainsClose.setSourceId("009569B4662A");
+                            zigbeeCurtainsClose.setRequestType("cmd");
+                            zigbeeCurtainsClose.setSerialNum(1);
+                            zigbeeCurtainsClose.setId("00124B0009E8D140");
+
+                            ZigbeeBean.AttributesBean CurtainsClose = new ZigbeeBean.AttributesBean();
+                            CurtainsClose.setTYP("WD-RXJ");
+                            CurtainsClose.setWIN("CLOSE");
+
+                            zigbeeCurtainsClose.setAttributes(CurtainsClose);
+
+                            L.e(TAG, "ZigbeeBean  CurtainsClose " + new Gson().toJson(zigbeeCurtainsClose));
+                            sendData(new Gson().toJson(zigbeeCurtainsClose));
+                            TTS(entity);
+                            break;
+                        case 109://停止-窗帘
+                            ZigbeeBean zigbeeCurtainsStop = new ZigbeeBean();
+                            zigbeeCurtainsStop.setSourceId("009569B4662A");
+                            zigbeeCurtainsStop.setRequestType("cmd");
+                            zigbeeCurtainsStop.setSerialNum(1);
+                            zigbeeCurtainsStop.setId("00124B0009E8D140");
+
+                            ZigbeeBean.AttributesBean CurtainsStop = new ZigbeeBean.AttributesBean();
+                            CurtainsStop.setTYP("WD-RXJ");
+                            CurtainsStop.setWIN("STOP");
+
+                            zigbeeCurtainsStop.setAttributes(CurtainsStop);
+
+                            L.e(TAG, "ZigbeeBean  CurtainsStop " + new Gson().toJson(zigbeeCurtainsStop));
+                            sendData(new Gson().toJson(zigbeeCurtainsStop));
+                            TTS(entity);
                             break;
                         case 107://启动-电灯
-                            sendData("{\"sourceId\":\"009569B4662A\",\"requestType\":\"cmd\",\"serialNum\":-1,\"id\":\"00124B000B277AD8\",\"attributes\":{\"TYP\":\"LT-CTM\",\"WIN\":\"ON\"}}");
+                            CurrentTemp = 60;
+                            ZigbeeBean zigbeeOpen = new ZigbeeBean();
+                            zigbeeOpen.setSourceId("009569B4662A");
+                            zigbeeOpen.setRequestType("cmd");
+                            zigbeeOpen.setSerialNum(-1);
+                            zigbeeOpen.setId("00124B000B277AD8");
+
+                            ZigbeeBean.AttributesBean beanOpen = new ZigbeeBean.AttributesBean();
+                            beanOpen.setTYP("LT-CTM");
+                            beanOpen.setLEV(String.valueOf(CurrentTemp));
+                            beanOpen.setSWI("ON");
+
+                            zigbeeOpen.setAttributes(beanOpen);
+
+                            L.e(TAG, "ZigbeeBean  Open " + new Gson().toJson(zigbeeOpen));
+                            sendData(new Gson().toJson(zigbeeOpen));
+                            TTS(entity);
                             break;
                         case 108://关闭-电灯
-                            sendData("{\"sourceId\":\"009569B4662A\",\"requestType\":\"cmd\",\"serialNum\":-1,\"id\":\"00124B000B277AD8\",\"attributes\":{\"TYP\":\"LT-CTM\",\"WIN\":\"OFF\"}}");
+                            CurrentTemp = 0;
+                            ZigbeeBean zigbeeClose = new ZigbeeBean();
+                            zigbeeClose.setSourceId("009569B4662A");
+                            zigbeeClose.setRequestType("cmd");
+                            zigbeeClose.setSerialNum(-1);
+                            zigbeeClose.setId("00124B000B277AD8");
+
+                            ZigbeeBean.AttributesBean beanClose = new ZigbeeBean.AttributesBean();
+
+                            beanClose.setLEV(String.valueOf(CurrentTemp));
+                            beanClose.setSWI("OFF");
+                            beanClose.setTYP("LT-CTM");
+
+                            zigbeeClose.setAttributes(beanClose);
+
+                            L.e(TAG, "ZigbeeBean  Close " + new Gson().toJson(zigbeeClose));
+                            sendData(new Gson().toJson(zigbeeClose));
+                            TTS(entity);
                             break;
-                    }
-                    if (!entity.getText().equals("")) {
-                        mTts.startSpeaking(entity.getText(), mTtsListener);
+                        case 110://点灯亮度调高
+                            CurrentTemp = CurrentTemp + 20;
+                            if (CurrentTemp <= 100) {
+                                ZigbeeBean zigbeeUp = new ZigbeeBean();
+                                zigbeeUp.setSourceId("009569B4662A");
+                                zigbeeUp.setRequestType("cmd");
+                                zigbeeUp.setSerialNum(-1);
+                                zigbeeUp.setId("00124B000B277AD8");
+
+                                ZigbeeBean.AttributesBean Up = new ZigbeeBean.AttributesBean();
+
+                                Up.setTYP("LT-CTM");
+                                Up.setLEV(String.valueOf(CurrentTemp));
+                                Up.setSWI("ON");
+                                zigbeeUp.setAttributes(Up);
+
+                                L.e(TAG, "ZigbeeBean  Up " + new Gson().toJson(zigbeeUp));
+                                sendData(new Gson().toJson(zigbeeUp));
+                                TTS(entity);
+                            } else {
+                                mTts.startSpeaking("已经是最大亮度了", mTtsListener);
+                                CurrentTemp = 100;
+                            }
+                            break;
+                        case 111://点灯亮度调底
+                            CurrentTemp = CurrentTemp - 20;
+                            if (CurrentTemp >= 20) {
+                                ZigbeeBean zigbeeDown = new ZigbeeBean();
+                                zigbeeDown.setSourceId("009569B4662A");
+                                zigbeeDown.setRequestType("cmd");
+                                zigbeeDown.setSerialNum(-1);
+                                zigbeeDown.setId("00124B000B277AD8");
+
+                                ZigbeeBean.AttributesBean Down = new ZigbeeBean.AttributesBean();
+
+                                Down.setTYP("LT-CTM");
+                                Down.setLEV(String.valueOf(CurrentTemp));
+                                Down.setSWI("ON");
+
+                                zigbeeDown.setAttributes(Down);
+
+                                L.e(TAG, "ZigbeeBean  Down " + new Gson().toJson(zigbeeDown));
+                                sendData(new Gson().toJson(zigbeeDown));
+                                TTS(entity);
+                            } else {
+                                mTts.startSpeaking("已经是最低亮度了", mTtsListener);
+                                CurrentTemp = 20;
+                            }
+                            break;
+                        case 112://点灯亮度调到最高
+                            CurrentTemp = 100;
+                            ZigbeeBean zigbeeMax = new ZigbeeBean();
+                            zigbeeMax.setSourceId("009569B4662A");
+                            zigbeeMax.setRequestType("cmd");
+                            zigbeeMax.setSerialNum(-1);
+                            zigbeeMax.setId("00124B000B277AD8");
+
+                            ZigbeeBean.AttributesBean Max = new ZigbeeBean.AttributesBean();
+
+                            Max.setTYP("LT-CTM");
+                            Max.setLEV(String.valueOf(CurrentTemp));
+                            Max.setSWI("ON");
+                            zigbeeMax.setAttributes(Max);
+
+                            L.e(TAG, "ZigbeeBean  Max " + new Gson().toJson(zigbeeMax));
+                            sendData(new Gson().toJson(zigbeeMax));
+                            TTS(entity);
+                            break;
+                        case 113://点灯亮度调到最底
+                            CurrentTemp = 20;
+                            ZigbeeBean zigbeeMin = new ZigbeeBean();
+                            zigbeeMin.setSourceId("009569B4662A");
+                            zigbeeMin.setRequestType("cmd");
+                            zigbeeMin.setSerialNum(-1);
+                            zigbeeMin.setId("00124B000B277AD8");
+
+                            ZigbeeBean.AttributesBean Min = new ZigbeeBean.AttributesBean();
+
+                            Min.setTYP("LT-CTM");
+                            Min.setLEV(String.valueOf(CurrentTemp));
+                            Min.setSWI("ON");
+                            zigbeeMin.setAttributes(Min);
+
+                            L.e(TAG, "ZigbeeBean  Min " + new Gson().toJson(zigbeeMin));
+                            sendData(new Gson().toJson(zigbeeMin));
+                            TTS(entity);
+                            break;
                     }
                 }
             }
@@ -581,6 +755,12 @@ public class VoiceService extends AccessibilityService {
                 L.e(TAG, "onFailure" + e.getMessage());
             }
         });
+    }
+
+    private void TTS(BaseEntity entity) {
+        if (!entity.getText().equals("")) {
+            mTts.startSpeaking(entity.getText(), mTtsListener);
+        }
     }
 
 //=============================================================  下面是串口调用逻辑  ======================================================================================================

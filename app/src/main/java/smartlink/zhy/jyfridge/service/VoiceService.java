@@ -177,6 +177,8 @@ public class VoiceService extends AccessibilityService {
         assert audioManager != null;
         L.e(TAG, "当前音量    " + audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) + "  最大音量  " + audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
 
+        DataSupport.deleteAll(RemindBean.class, "triggerAtMillis<?", String.valueOf(System.currentTimeMillis()));
+
         List<RemindBean> remindBeanList = DataSupport.select("triggerAtMillis").where("triggerAtMillis >= ?", String.valueOf(System.currentTimeMillis())).find(RemindBean.class);
 
         if (remindBeanList.size() > 0) {
@@ -188,7 +190,6 @@ public class VoiceService extends AccessibilityService {
                 am.set(AlarmManager.RTC_WAKEUP, remindBean.getTriggerAtMillis(), pendingIntent);
                 requestCode++;
             }
-
             L.e(TAG, "还有没有过期的日程提醒");
         }
     }
@@ -549,7 +550,9 @@ public class VoiceService extends AccessibilityService {
                             PendingIntent pendingIntent = PendingIntent.getBroadcast(VoiceService.this, requestCode, intent, 0);
                             am.set(AlarmManager.RTC_WAKEUP, entity.getTime_start(), pendingIntent);
                             requestCode++;
-                            TTS(entity);
+                            if("".equals(entity.getDetails())){
+                                TTS(entity);
+                            }
                             break;
                         case 101://启动-手机无线充电设备
                             TTS(entity);

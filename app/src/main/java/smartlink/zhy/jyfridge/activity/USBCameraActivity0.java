@@ -337,8 +337,8 @@ public class USBCameraActivity0 extends AppCompatActivity implements CameraDialo
         File f = new File(imgUrls);
 
         builder.addFormDataPart("img1", f.getName(), RequestBody.create(MEDIA_TYPE_PNG, f))
-                .addFormDataPart("img.pid", "1")
-                .addFormDataPart("img.menuId", "1")
+                .addFormDataPart("img.pid", String.valueOf(ConstantPool.UserID))
+                .addFormDataPart("img.menuId", String.valueOf(ConstantPool.FridgeId))
                 .addFormDataPart("place", String.valueOf(place));
 
         MultipartBody requestBody = builder.build();

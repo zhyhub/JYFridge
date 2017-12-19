@@ -199,12 +199,12 @@ public class VoiceService extends AccessibilityService {
             L.e(TAG, "还有没有过期的日程提醒");
         }
 
-        if(receiver == null){
+        if (receiver == null) {
             receiver = new NetWorkStateReceiver();
         }
         IntentFilter filter = new IntentFilter();
         filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-        registerReceiver(receiver,filter);
+        registerReceiver(receiver, filter);
     }
 
     /**
@@ -1116,7 +1116,7 @@ public class VoiceService extends AccessibilityService {
             L.e("网络状态发生变化");
             if (isWifiConnected(VoiceService.this)) {
                 mTts.startSpeaking("网络连接成功", mTtsListener);
-            }else {
+            } else {
                 mTts.startSpeaking("网络连接已断开", mTtsListener);
             }
         }

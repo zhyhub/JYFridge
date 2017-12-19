@@ -17,7 +17,7 @@ public class ConstantPool {
     public static final String BASE_RUYI = "http://api.ruyi.ai/";
 //    public static final String BASE_URL = "http://192.168.100.173:8080/imgTest/";
     public static final String BASE_URL = "http://192.168.199.182:8080/imgTest/";
-    public static final String APP_KEY = "a0927149-bfd5-40cc-824e-a110b0847c6e";
+//    public static final String APP_KEY = "a0927149-bfd5-40cc-824e-a110b0847c6e";
 
     public static final String AI = BASE_URL + "in/general!ai";
 //    public static final String UpLoadInfo = "http://192.168.100.173:8080/imgTest/in/img!uploadInfo";

@@ -8,6 +8,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -159,10 +161,12 @@ public class VoiceService extends AccessibilityService {
     int fid = -1;
     AlarmManager am;
 
+    private NetWorkStateReceiver receiver;
+
     @Override
     public void onCreate() {
         super.onCreate();
-        createSocket("192.168.100.1", 8888);
+        createSocket();
         am = (AlarmManager) VoiceService.this.getSystemService(Context.ALARM_SERVICE);
         alarmReceiver = new AlarmReceiver();
         registerReceiver(alarmReceiver, new IntentFilter("smartlink.zhy.jyfridge.RING"));
@@ -171,6 +175,8 @@ public class VoiceService extends AccessibilityService {
         // 使用SpeechRecognizer对象，可根据回调消息自定义界面；
         mIat = SpeechRecognizer.createRecognizer(VoiceService.this, mInitListener);
         mTts = SpeechSynthesizer.createSynthesizer(VoiceService.this, mTtsInitListener);
+        // 设置参数
+        setTtsParam();
         initUart();
 
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
@@ -192,6 +198,13 @@ public class VoiceService extends AccessibilityService {
             }
             L.e(TAG, "还有没有过期的日程提醒");
         }
+
+        if(receiver == null){
+            receiver = new NetWorkStateReceiver();
+        }
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(receiver,filter);
     }
 
     /**
@@ -311,10 +324,6 @@ public class VoiceService extends AccessibilityService {
             case KeyEvent.KEYCODE_F1:
                 //接受到f1信号，设备已经被唤醒，调用讯飞语音识别
                 L.e(TAG, "接受到f1信号，设备已经被唤醒，调用讯飞语音识别");
-                // 移动数据分析，收集开始合成事件
-                FlowerCollector.onEvent(VoiceService.this, "tts_play");
-                // 设置参数
-                setTtsParam();
 
                 if (mTts.isSpeaking()) {
                     mTts.stopSpeaking();
@@ -497,6 +506,7 @@ public class VoiceService extends AccessibilityService {
         readHandler.removeCallbacks(readUpdate);//停止指令
         requestCode = 0;
         closeSocket();
+        unregisterReceiver(receiver);
         super.onDestroy();
     }
 
@@ -550,7 +560,7 @@ public class VoiceService extends AccessibilityService {
                             PendingIntent pendingIntent = PendingIntent.getBroadcast(VoiceService.this, requestCode, intent, 0);
                             am.set(AlarmManager.RTC_WAKEUP, entity.getTime_start(), pendingIntent);
                             requestCode++;
-                            if("".equals(entity.getDetails())){
+                            if ("".equals(entity.getDetails())) {
                                 TTS(entity);
                             }
                             break;
@@ -955,8 +965,8 @@ public class VoiceService extends AccessibilityService {
     private OutputStream outputStream;
     private static final int MSG_SOCKET = 1234;
 
-    protected void createSocket(final String ip, final int port) {
-        L.e(TAG, "createSocket() called with: ip = [" + ip + "], port = [" + port + "]");
+    protected void createSocket() {
+        L.e(TAG, "createSocket() called with: ip = [" + "192.168.100.1" + "], port = [" + 8888 + "]");
 
         //初始化线程池
         mThreadPool = Executors.newCachedThreadPool();
@@ -1001,7 +1011,7 @@ public class VoiceService extends AccessibilityService {
             @Override
             public void run() {
                 try {
-                    socket = new Socket(ip, port);
+                    socket = new Socket("192.168.100.1", 8888);
                     L.e(TAG, "Socket connected? " + socket.isConnected());
                 } catch (IOException | NullPointerException e) {
                     L.e(TAG, e.getMessage() + "     " + e);
@@ -1089,5 +1099,26 @@ public class VoiceService extends AccessibilityService {
                 }
             }
         });
+    }
+
+//=============================================================  下面是监听wifi连接情况  ======================================================================================================
+
+    private static boolean isWifiConnected(Context context) {
+        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(CONNECTIVITY_SERVICE);
+        assert connectivityManager != null;
+        NetworkInfo info = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        return info.isConnected();
+    }
+
+    private class NetWorkStateReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            L.e("网络状态发生变化");
+            if (isWifiConnected(VoiceService.this)) {
+                mTts.startSpeaking("网络连接成功", mTtsListener);
+            }else {
+                mTts.startSpeaking("网络连接已断开", mTtsListener);
+            }
+        }
     }
 }

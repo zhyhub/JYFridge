@@ -154,8 +154,13 @@ public class VoiceService extends AccessibilityService {
 
     Handler writeHandler = null;
     Handler readHandler = null;
+    Handler redHandler = null;
+
+    Runnable redUpdate = null;
     Runnable writeUpdate = null;
     Runnable readUpdate = null;
+
+    private boolean isRed = false;
 
     int readLength;
     int fid = -1;
@@ -206,7 +211,6 @@ public class VoiceService extends AccessibilityService {
         filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         registerReceiver(receiver, filter);
 
-        InfraredInduction();
     }
 
     /**
@@ -507,6 +511,7 @@ public class VoiceService extends AccessibilityService {
         this.startService(sevice);
         writeHandler.removeCallbacks(writeUpdate);//停止指令
         readHandler.removeCallbacks(readUpdate);//停止指令
+        redHandler.removeCallbacks(redUpdate);//停止指令
         requestCode = 0;
         closeSocket();
         unregisterReceiver(receiver);
@@ -812,6 +817,34 @@ public class VoiceService extends AccessibilityService {
             }
         };
         readHandler.post(readUpdate);
+
+        redHandler = new Handler();
+        redUpdate = new Runnable() {
+            @Override
+            public void run() {
+                mSignwayManager.openGpioDevice();
+                //配置SWH5528_J9_PIN1,对应GPIO2_A6
+                mSignwayManager.setGpioNum(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN24,
+                        SignwayManager.GPIOGroup.GPIO0, SignwayManager.GPIONum.PD2);
+                int state = mSignwayManager.getGpioStatus(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN24);
+                L.e(TAG, "  state  : " + state);
+//                if (state == 1 && !isRed) {
+//                    if (mTts.isSpeaking()) {
+//                        mTts.stopSpeaking();
+//                    }
+//                    if (mIat.isListening()) {
+//                        mIat.stopListening();
+//                    }
+//                    mTts.startSpeaking("主人，您来啦！", mTtsListener);
+//                    isRed = true;
+//                } else if (state == 0) {
+//                    isRed = false;
+//                }
+                redHandler.postDelayed(redUpdate, 500);
+            }
+        };
+        redHandler.post(redUpdate);
+
     }
 
     private void sendByte() {
@@ -1130,10 +1163,4 @@ public class VoiceService extends AccessibilityService {
 
 //=============================================================  下面是红外感应逻辑  ======================================================================================================
 
-    private void InfraredInduction() {
-        mSignwayManager.openGpioDevice();
-
-        int state = mSignwayManager.getGpioStatus(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN24);
-        L.e(TAG, "  state  : " + state);
-    }
 }

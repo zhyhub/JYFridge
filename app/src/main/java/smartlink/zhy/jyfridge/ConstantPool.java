@@ -15,13 +15,15 @@ public class ConstantPool {
     public static final int Camera_3 = 3;
 
     public static final String BASE_RUYI = "http://api.ruyi.ai/";
-//    public static final String BASE_URL = "http://192.168.100.173:8080/imgTest/";
-    public static final String BASE_URL = "http://192.168.199.182:8080/imgTest/";
+    //    public static final String BASE_URL = "http://192.168.100.173:8080/imgTest/";
+//    public static final String BASE_URL = "http://192.168.199.182:8080/imgTest/";
+    public static final String BASE_URL = "http://112.124.102.114:8090/imgTest/";
 //    public static final String APP_KEY = "a0927149-bfd5-40cc-824e-a110b0847c6e";
 
     public static final String AI = BASE_URL + "in/general!ai";
-//    public static final String UpLoadInfo = "http://192.168.100.173:8080/imgTest/in/img!uploadInfo";
-    public static final String UpLoadInfo = "http://192.168.199.182:8080/imgTest/in/img!uploadInfo";
+    //    public static final String UpLoadInfo = "http://192.168.100.173:8080/imgTest/in/img!uploadInfo";
+//    public static final String UpLoadInfo = "http://192.168.199.182:8080/imgTest/in/img!uploadInfo";
+    public static final String UpLoadInfo = "http://112.124.102.114:8090/imgTest/in/img!uploadInfo";
 
     public static final byte Zero = 0x00;
     public static final byte Default = 10;

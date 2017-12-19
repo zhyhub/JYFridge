@@ -205,6 +205,8 @@ public class VoiceService extends AccessibilityService {
         IntentFilter filter = new IntentFilter();
         filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         registerReceiver(receiver, filter);
+
+        InfraredInduction();
     }
 
     /**
@@ -528,7 +530,7 @@ public class VoiceService extends AccessibilityService {
             @Override
             public void onSuccess(Object o) {
                 L.e(TAG, "onSuccess" + o.toString());
-                if(mIat.isListening()){
+                if (mIat.isListening()) {
                     mIat.stopListening();
                 }
                 Gson gson = new Gson();
@@ -1124,5 +1126,14 @@ public class VoiceService extends AccessibilityService {
                 mTts.startSpeaking("网络连接已断开", mTtsListener);
             }
         }
+    }
+
+//=============================================================  下面是红外感应逻辑  ======================================================================================================
+
+    private void InfraredInduction() {
+        mSignwayManager.openGpioDevice();
+
+        int state = mSignwayManager.getGpioStatus(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN24);
+        L.e(TAG, "  state  : " + state);
     }
 }

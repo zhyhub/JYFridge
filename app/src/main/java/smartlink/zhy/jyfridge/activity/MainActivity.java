@@ -149,17 +149,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Connector.getDatabase();
-        RemindBean remindBean = new RemindBean();
-        remindBean.setTriggerAtMillis(System.currentTimeMillis()+50 * 1000L);
-        remindBean.setMsg("起床，起床");
-        remindBean.save();
-        if (remindBean.save()) {
-            L.e(TAG, "Connector   存储成功");
-        } else {
-            L.e(TAG, "Connector   存储失败");
-        }
-
         mainReceiver = new MainReceiver();
         registerReceiver(mainReceiver, new IntentFilter("smartlink.zhy.jyfridge.service"));
 

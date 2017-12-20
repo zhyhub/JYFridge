@@ -56,22 +56,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    private MainReceiver mainReceiver;
-
     private Handler handler = new Handler();
-
-    private class MainReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            boolean isOpen = intent.getBooleanExtra("isOpen", false);
-            L.e(TAG, "MainActivity MainReceiver 收到广播了 ++" + isOpen);
-//            sendMsg(txt);
-
-//            if(isOpen){
-//            }else {
-//            }
-        }
-    }
 
     /**
      * 打开陀螺仪摄像头
@@ -149,8 +134,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mainReceiver = new MainReceiver();
-        registerReceiver(mainReceiver, new IntentFilter("smartlink.zhy.jyfridge.service"));
 
         AppCompatButton button0 = findViewById(R.id.button_0);
         AppCompatButton button1 = findViewById(R.id.button_1);
@@ -206,7 +189,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unregisterReceiver(mainReceiver);
         L.e(TAG, "onDestroy");
     }
 

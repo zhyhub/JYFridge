@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
+import android.media.FaceDetector;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -89,7 +90,10 @@ public class VoiceService extends AccessibilityService {
      * 串口接入
      */
 
-    private boolean isOpen = false;
+    private boolean isOpen1 = false;
+    private boolean isOpen2 = false;
+    private boolean isOpen8 = false;
+    private boolean isOpen40 = false;
 
     private byte MODE;
 
@@ -828,18 +832,6 @@ public class VoiceService extends AccessibilityService {
                         SignwayManager.GPIOGroup.GPIO0, SignwayManager.GPIONum.PD2);
                 int state = mSignwayManager.getGpioStatus(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN24);
                 L.e(TAG, "  state  : " + state);
-//                if (state == 1 && !isRed) {
-//                    if (mTts.isSpeaking()) {
-//                        mTts.stopSpeaking();
-//                    }
-//                    if (mIat.isListening()) {
-//                        mIat.stopListening();
-//                    }
-//                    mTts.startSpeaking("主人，您来啦！", mTtsListener);
-//                    isRed = true;
-//                } else if (state == 0) {
-//                    isRed = false;
-//                }
                 redHandler.postDelayed(redUpdate, 500);
             }
         };
@@ -925,41 +917,36 @@ public class VoiceService extends AccessibilityService {
             MODE = sendData[2];
             Log.e("TTTTTTTTT MODE = ", MODE + "    " + sendData[9]);
 
-            if ((sendData[4] & 0x01) != 0) {
-//                L.e(TAG, "冷藏室门   开了");
-                if (!isOpen) {
-                    isOpen = true;
-                    Intent intent = new Intent();
-                    intent.setAction("smartlink.zhy.jyfridge.service");
-                    intent.putExtra("isOpen", isOpen);
-                    sendBroadcast(intent);
-                    Log.e(TAG, "VoiceService  开了  广播发送了   " + isOpen);
-                }
-            } else {
-//                L.e(TAG, "冷藏室门   关了");
-                if (isOpen) {
-                    isOpen = false;
-                    Intent intent = new Intent();
-                    intent.setAction("smartlink.zhy.jyfridge.service");
-                    intent.putExtra("isOpen", isOpen);
-                    sendBroadcast(intent);
-                    Log.e(TAG, "VoiceService  关了  广播发送了   " + isOpen);
-                }
+            if ((sendData[4] & 0x01) != 0 && !isOpen1) {
+                L.e(TAG, "冷藏室门   开了");
+                isOpen1 = true;
+            } else if ((sendData[4] & 0x01) == 0) {
+                L.e(TAG, "冷藏室门   关了");
+                isOpen1 = false;
             }
-            if ((sendData[4] & 0x02) != 0) {
-//                L.e(TAG, "冷冻门   开了");
-            } else {
-//                L.e(TAG, "冷冻门   关了");
+
+            if ((sendData[4] & 0x02) != 0 && !isOpen2) {
+                L.e(TAG, "冷冻门   开了");
+                isOpen2 = true;
+            } else if((sendData[4] & 0x02) == 0){
+                L.e(TAG, "冷冻门   关了");
+                isOpen2 = false;
             }
-            if ((sendData[4] & 0x08) != 0) {
-//                L.e(TAG, "变温门   开了");
-            } else {
-//                L.e(TAG, "变温门   关了");
+
+            if ((sendData[4] & 0x08) != 0 && !isOpen8) {
+                L.e(TAG, "变温门   开了");
+                isOpen8 = true;
+            } else if((sendData[4] & 0x08) == 0){
+                L.e(TAG, "变温门   关了");
+                isOpen8 = false;
             }
-            if ((sendData[4] & 0x40) != 0) {
-//                L.e(TAG, "红外开关   开了");
+
+            if ((sendData[4] & 0x40) != 0 && !isOpen40) {
+                L.e(TAG, "红外开关   开了");
+                isOpen40 = true;
             } else {
-//                L.e(TAG, "红外开关   关了");
+                L.e(TAG, "红外开关   关了");
+                isOpen40 = false;
             }
         }
     }

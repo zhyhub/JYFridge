@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        startService(new Intent(MainActivity.this,VoiceService.class));
 //        AppCompatButton button0 = findViewById(R.id.button_0);
 //        AppCompatButton button1 = findViewById(R.id.button_1);
 //        AppCompatButton button2 = findViewById(R.id.button_2);

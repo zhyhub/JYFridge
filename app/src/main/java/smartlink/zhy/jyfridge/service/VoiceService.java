@@ -214,7 +214,7 @@ public class VoiceService extends AccessibilityService {
         IntentFilter filter = new IntentFilter();
         filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         registerReceiver(receiver, filter);
-
+        L.e(TAG, "ControlService ControlService ControlService ControlService");
     }
 
     /**
@@ -928,7 +928,7 @@ public class VoiceService extends AccessibilityService {
             if ((sendData[4] & 0x02) != 0 && !isOpen2) {
                 L.e(TAG, "冷冻门   开了");
                 isOpen2 = true;
-            } else if((sendData[4] & 0x02) == 0){
+            } else if ((sendData[4] & 0x02) == 0) {
                 L.e(TAG, "冷冻门   关了");
                 isOpen2 = false;
             }
@@ -936,7 +936,7 @@ public class VoiceService extends AccessibilityService {
             if ((sendData[4] & 0x08) != 0 && !isOpen8) {
                 L.e(TAG, "变温门   开了");
                 isOpen8 = true;
-            } else if((sendData[4] & 0x08) == 0){
+            } else if ((sendData[4] & 0x08) == 0) {
                 L.e(TAG, "变温门   关了");
                 isOpen8 = false;
             }

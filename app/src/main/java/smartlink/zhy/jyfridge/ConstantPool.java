@@ -25,6 +25,10 @@ public class ConstantPool {
     public static final String UpLoadInfo = "http://192.168.199.182:8080/imgTest/in/img!uploadInfo";
 //    public static final String UpLoadInfo = "http://112.124.102.114:8090/imgTest/in/img!uploadInfo";
 
+    public static final String OPEN = BASE_URL + "in/recognition!open";
+    public static final String CLOSE = BASE_URL + "in/recognition!close";
+    public static final String GetResult = BASE_URL + "in/recognition!getetResult";
+
     public static final byte Zero = 0x00;
     public static final byte Default = 10;
     public static final byte Data0_beginning_commend = 0x55;

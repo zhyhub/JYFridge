@@ -159,10 +159,12 @@ public class VoiceService extends AccessibilityService {
     Handler writeHandler = null;
     Handler readHandler = null;
     Handler redHandler = null;
+    Handler resultHandler = null;
 
     Runnable redUpdate = null;
     Runnable writeUpdate = null;
     Runnable readUpdate = null;
+    Runnable resultUpdate = null;
 
     private boolean isRed = false;
 
@@ -920,34 +922,36 @@ public class VoiceService extends AccessibilityService {
             if ((sendData[4] & 0x01) != 0 && !isOpen1) {
                 L.e(TAG, "冷藏室门   开了");
                 isOpen1 = true;
+                OpenDoor();
             } else if ((sendData[4] & 0x01) == 0) {
                 L.e(TAG, "冷藏室门   关了");
                 isOpen1 = false;
+                CloseDoor();
             }
 
-            if ((sendData[4] & 0x02) != 0 && !isOpen2) {
-                L.e(TAG, "冷冻门   开了");
-                isOpen2 = true;
-            } else if ((sendData[4] & 0x02) == 0) {
-                L.e(TAG, "冷冻门   关了");
-                isOpen2 = false;
-            }
-
-            if ((sendData[4] & 0x08) != 0 && !isOpen8) {
-                L.e(TAG, "变温门   开了");
-                isOpen8 = true;
-            } else if ((sendData[4] & 0x08) == 0) {
-                L.e(TAG, "变温门   关了");
-                isOpen8 = false;
-            }
-
-            if ((sendData[4] & 0x40) != 0 && !isOpen40) {
-                L.e(TAG, "红外开关   开了");
-                isOpen40 = true;
-            } else {
-                L.e(TAG, "红外开关   关了");
-                isOpen40 = false;
-            }
+//            if ((sendData[4] & 0x02) != 0 && !isOpen2) {
+//                L.e(TAG, "冷冻门   开了");
+//                isOpen2 = true;
+//            } else if ((sendData[4] & 0x02) == 0) {
+//                L.e(TAG, "冷冻门   关了");
+//                isOpen2 = false;
+//            }
+//
+//            if ((sendData[4] & 0x08) != 0 && !isOpen8) {
+//                L.e(TAG, "变温门   开了");
+//                isOpen8 = true;
+//            } else if ((sendData[4] & 0x08) == 0) {
+//                L.e(TAG, "变温门   关了");
+//                isOpen8 = false;
+//            }
+//
+//            if ((sendData[4] & 0x40) != 0 && !isOpen40) {
+//                L.e(TAG, "红外开关   开了");
+//                isOpen40 = true;
+//            } else {
+//                L.e(TAG, "红外开关   关了");
+//                isOpen40 = false;
+//            }
         }
     }
 
@@ -1148,6 +1152,95 @@ public class VoiceService extends AccessibilityService {
         }
     }
 
-//=============================================================  下面是红外感应逻辑  ======================================================================================================
+//=============================================================  下面是控制图像识别逻辑 ======================================================================================================
+
+    private void OpenDoor() {
+        BaseOkHttpClient.newBuilder()
+                .get()
+                .url(ConstantPool.OPEN)
+                .build().enqueue(new BaseCallBack() {
+            @Override
+            public void onSuccess(Object o) {
+                L.e(TAG, "open  onSuccess" + o.toString());
+                resultHandler = new Handler();
+                resultUpdate = new Runnable() {
+                    @Override
+                    public void run() {
+                        getResult();
+                        resultHandler.postDelayed(resultUpdate, 1000); //1秒后再调用
+                    }
+                };
+                resultHandler.post(resultUpdate);
+            }
+
+            @Override
+            public void onError(int code) {
+                L.e(TAG, "open onError");
+                mTts.startSpeaking("哎呀，好像出问题了", mTtsListener);
+            }
+
+            @Override
+            public void onFailure(Call call, IOException e) {
+                L.e(TAG, "open onFailure" + e.getMessage());
+            }
+        });
+    }
+
+    private void CloseDoor() {
+        BaseOkHttpClient.newBuilder()
+                .get()
+                .url(ConstantPool.CLOSE)
+                .build().enqueue(new BaseCallBack() {
+            @Override
+            public void onSuccess(Object o) {
+                L.e(TAG, "close  onSuccess" + o.toString());
+                resultHandler.removeCallbacks(resultUpdate);
+            }
+
+            @Override
+            public void onError(int code) {
+                L.e(TAG, "close onError");
+                mTts.startSpeaking("哎呀，好像出问题了", mTtsListener);
+                resultHandler.removeCallbacks(resultUpdate);
+            }
+
+            @Override
+            public void onFailure(Call call, IOException e) {
+                L.e(TAG, "close onFailure" + e.getMessage());
+                resultHandler.removeCallbacks(resultUpdate);
+            }
+        });
+    }
+
+    private void getResult() {
+        BaseOkHttpClient.newBuilder()
+                .get()
+                .url(ConstantPool.GetResult)
+                .build().enqueue(new BaseCallBack() {
+            @Override
+            public void onSuccess(Object o) {
+                L.e(TAG, "getResult  onSuccess" + o.toString());
+                if (mIat.isListening()) {
+                    mIat.stopListening();
+                }
+                Gson gson = new Gson();
+                BaseEntity entity = gson.fromJson(o.toString(), BaseEntity.class);
+                if (entity.getCode() == 1) {
+                    mTts.startSpeaking(entity.getText(), mTtsListener);
+                }
+            }
+
+            @Override
+            public void onError(int code) {
+                L.e(TAG, "getResult onError");
+                mTts.startSpeaking("哎呀，好像出问题了", mTtsListener);
+            }
+
+            @Override
+            public void onFailure(Call call, IOException e) {
+                L.e(TAG, "getResult onFailure" + e.getMessage());
+            }
+        });
+    }
 
 }

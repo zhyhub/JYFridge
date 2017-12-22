@@ -61,8 +61,6 @@ public class MainActivity extends AppCompatActivity{
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    private Button buttonPlay,buttonPause,buttonStop,buttonResume;
-
 //    private Handler handler = new Handler();
 
 //    /**

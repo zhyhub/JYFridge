@@ -874,7 +874,7 @@ public class VoiceService extends AccessibilityService {
                 Log.e("TAG", "写");
                 DATA_2 = ConstantPool.Data2_Running_State;
                 sendByte();
-                readHandler.postDelayed(readUpdate, 2000); //1秒后再调用
+                readHandler.postDelayed(readUpdate, 1000); //1秒后再调用
             }
         };
         readHandler.post(readUpdate);
@@ -966,7 +966,7 @@ public class VoiceService extends AccessibilityService {
      */
     private void setNewData(byte[] newData, int readLength) {
 
-        if (newData != null && readLength != 0) {
+        if (newData != null && readLength > 0) {
             int i = 0;
             while ((newData[i] != 0x55) && (newData[i + 1] != 0xAA)) {
                 i++;

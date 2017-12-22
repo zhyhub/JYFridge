@@ -19,8 +19,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatButton;
 import android.util.TimeUtils;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TimePicker;
 
+import org.greenrobot.eventbus.EventBus;
 import org.litepal.crud.DataSupport;
 import org.litepal.tablemanager.Connector;
 
@@ -44,7 +46,10 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import smartlink.zhy.jyfridge.ConstantPool;
 import smartlink.zhy.jyfridge.R;
+import smartlink.zhy.jyfridge.bean.PlayEvent;
 import smartlink.zhy.jyfridge.bean.RemindBean;
+import smartlink.zhy.jyfridge.bean.Song;
+import smartlink.zhy.jyfridge.service.PlayerService;
 import smartlink.zhy.jyfridge.service.VoiceService;
 import smartlink.zhy.jyfridge.utils.L;
 
@@ -52,9 +57,11 @@ import smartlink.zhy.jyfridge.utils.L;
  * 陀螺仪达到一定度数后自动跳转到拍照界面
  */
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
+
+    private Button buttonPlay,buttonPause,buttonStop,buttonResume;
 
 //    private Handler handler = new Handler();
 
@@ -134,7 +141,29 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        startService(new Intent(MainActivity.this,VoiceService.class));
+        startService(new Intent(this, PlayerService.class));
+
+        buttonPlay = findViewById(R.id.button_play);
+        buttonPause = findViewById(R.id.button_pause);
+        buttonStop = findViewById(R.id.button_stop);
+        buttonResume = findViewById(R.id.button_resume);
+
+        buttonPlay.setOnClickListener(this);
+        buttonPause.setOnClickListener(this);
+        buttonStop.setOnClickListener(this);
+        buttonResume.setOnClickListener(this);
+
+        PlayEvent playEvent = new PlayEvent();
+        List<Song> queue = new ArrayList<>();
+        queue.add(getSong("http://audio.xmcdn.com/group36/M0B/9A/4E/wKgJUlovM8jhmkjNAHnEOQz4DOw174.m4a"));
+        queue.add(getSong("http://audio.xmcdn.com/group36/M02/26/B5/wKgJUloyJCfDqU3yAGvv1H_Stoc403.m4a"));
+        queue.add(getSong("http://audio.xmcdn.com/group37/M02/54/E1/wKgJoFozVOLQjGT0AGOtSP3fuMQ730.m4a"));
+        queue.add(getSong("http://audio.xmcdn.com/group36/M07/90/0E/wKgJUlo0jBSAK6VKAF81XkZ0OVY124.m4a"));
+        playEvent.setAction(PlayEvent.Action.PLAY);
+        playEvent.setQueue(queue);
+        EventBus.getDefault().post(playEvent);
+
+
 //        AppCompatButton button0 = findViewById(R.id.button_0);
 //        AppCompatButton button1 = findViewById(R.id.button_1);
 //        AppCompatButton button2 = findViewById(R.id.button_2);
@@ -165,6 +194,12 @@ public class MainActivity extends AppCompatActivity {
 //            }
 //        });
 
+    }
+
+    private Song getSong(String url) {
+        Song song = new Song();
+        song.setPath(url);
+        return song;
     }
 
     @Override
@@ -198,4 +233,33 @@ public class MainActivity extends AppCompatActivity {
         L.e(TAG, "onPause");
     }
 
+    @Override
+    public void onClick(View v) {
+        PlayEvent playEvent;
+        switch (v.getId()) {
+            case R.id.button_play://开始
+                playEvent = new PlayEvent();
+                List<Song> queue = new ArrayList<>();
+                queue.add(getSong("http://audio.xmcdn.com/group36/M03/F0/1D/wKgJUlow8YSwunhrAFwiSKNGgIQ906.m4a"));
+                playEvent.setAction(PlayEvent.Action.PLAY);
+                playEvent.setQueue(queue);
+                EventBus.getDefault().post(playEvent);
+                break;
+            case R.id.button_pause://暂停
+                playEvent = new PlayEvent();
+                playEvent.setAction(PlayEvent.Action.PAUSE);
+                EventBus.getDefault().post(playEvent);
+                break;
+            case R.id.button_stop://停止
+                playEvent=new PlayEvent();
+                playEvent.setAction(PlayEvent.Action.STOP);
+                EventBus.getDefault().post(playEvent);
+                break;
+            case R.id.button_resume://恢复
+                playEvent=new PlayEvent();
+                playEvent.setAction(PlayEvent.Action.RESUME);
+                EventBus.getDefault().post(playEvent);
+                break;
+        }
+    }
 }

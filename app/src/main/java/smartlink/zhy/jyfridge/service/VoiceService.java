@@ -32,6 +32,7 @@ import com.iflytek.cloud.SynthesizerListener;
 import com.iflytek.sunflower.FlowerCollector;
 import com.signway.SignwayManager;
 
+import org.greenrobot.eventbus.EventBus;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.litepal.crud.DataSupport;
@@ -42,6 +43,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -53,9 +55,12 @@ import okhttp3.Call;
 import smartlink.zhy.jyfridge.ConstantPool;
 import smartlink.zhy.jyfridge.R;
 import smartlink.zhy.jyfridge.bean.BaseEntity;
+import smartlink.zhy.jyfridge.bean.PlayEvent;
 import smartlink.zhy.jyfridge.bean.RemindBean;
+import smartlink.zhy.jyfridge.bean.Song;
 import smartlink.zhy.jyfridge.bean.ZigbeeBean;
 import smartlink.zhy.jyfridge.json.JsonParser;
+import smartlink.zhy.jyfridge.player.MusicPlayer;
 import smartlink.zhy.jyfridge.utils.BaseCallBack;
 import smartlink.zhy.jyfridge.utils.BaseOkHttpClient;
 import smartlink.zhy.jyfridge.utils.L;
@@ -174,6 +179,8 @@ public class VoiceService extends AccessibilityService {
 
     private NetWorkStateReceiver receiver;
 
+    private boolean isPause = false;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -274,14 +281,15 @@ public class VoiceService extends AccessibilityService {
             if (error == null) {
                 showTip("播放完成");
                 mIatResults.clear();
+
                 // 设置参数
-                setParam();
-                ret = mIat.startListening(mRecognizerListener);
-                if (ret != ErrorCode.SUCCESS) {
-                    showTip("听写失败,错误码：" + ret);
-                } else {
-                    showTip(getString(R.string.text_begin));
-                }
+                    setParam();
+                    ret = mIat.startListening(mRecognizerListener);
+                    if (ret != ErrorCode.SUCCESS) {
+                        showTip("听写失败,错误码：" + ret);
+                    } else {
+                        showTip(getString(R.string.text_begin));
+                    }
             } else {
                 showTip(error.getPlainDescription(true));
             }
@@ -341,6 +349,13 @@ public class VoiceService extends AccessibilityService {
                 if (mIat.isListening()) {
                     mIat.stopListening();
                 }
+
+                if (MusicPlayer.getPlayer().isPlaying()) {
+                    MusicPlayer.getPlayer().pause();
+                    isPause = true;
+                    L.e(TAG, "onKeyEvent  播放睡前故事暂停");
+                }
+
                 int code = mTts.startSpeaking("我在，您说", mTtsListener);
                 /*
                  * 只保存音频不进行播放接口,调用此接口请注释startSpeaking接口
@@ -375,6 +390,13 @@ public class VoiceService extends AccessibilityService {
             // 错误码：10118(您没有说话)，可能是录音机权限被禁，需要提示用户打开应用的录音权限。
             // 如果使用本地功能（语记）需要提示用户开启语记的录音权限。
             showTip(error.getPlainDescription(true));
+
+            if (isPause) {
+                MusicPlayer.getPlayer().resume();
+                isPause = false;
+                L.e(TAG, "onCompleted  播放睡前故事恢复播放");
+            }
+
         }
 
         @Override
@@ -526,6 +548,12 @@ public class VoiceService extends AccessibilityService {
 
 //=============================================================  下面是请求海知语音获取意图 并做相应的指令操作 ======================================================================================================
 
+    private Song getSong(String url) {
+        Song song = new Song();
+        song.setPath(url);
+        return song;
+    }
+
     private void sendMsg(String txt, int currentVolume, final int maxVolume) {
         L.e(TAG, "  sendMsg   " + Arrays.toString(sendData) + "   currentVolume   " + currentVolume + "   maxVolume   " + maxVolume);
         BaseOkHttpClient.newBuilder()
@@ -580,6 +608,33 @@ public class VoiceService extends AccessibilityService {
                             if ("".equals(entity.getDetails())) {
                                 TTS(entity);
                             }
+                            break;
+                        case 4://获取睡前故事url
+                            TTS(entity);
+                            List<Song> queue = new ArrayList<>();
+                            queue.add(getSong(entity.getUrl().replace("\\", "")));
+                            MusicPlayer.getPlayer().setQueue(queue, 0);
+                            L.e(TAG, "sendMsg  播放睡前故事播放" + entity.getUrl().replace("\\", ""));
+                            if (mTts.isSpeaking()) mTts.stopSpeaking();
+                            if (mIat.isListening()) mIat.stopListening();
+                            isPause = true;
+                            break;
+                        case 5://暂停
+                            L.e(TAG, "sendMsg  播放睡前故事暂停");
+                            MusicPlayer.getPlayer().pause();
+                            TTS(entity);
+                            isPause = false;
+                            break;
+                        case 6://恢复播放
+                            L.e(TAG, "sendMsg  播放睡前故事恢复播放");
+                            MusicPlayer.getPlayer().resume();
+                            isPause = false;
+                            break;
+                        case 7://停止
+                            L.e(TAG, "sendMsg  播放睡前故事停止播放");
+                            MusicPlayer.getPlayer().stop();
+                            TTS(entity);
+                            isPause = false;
                             break;
                         case 101://启动-手机无线充电设备
                             TTS(entity);
@@ -927,6 +982,7 @@ public class VoiceService extends AccessibilityService {
                     return;
                 }
             }
+            L.e(TAG, Arrays.toString(sendData));
 
             MODE = sendData[2];
             Log.e("TTTTTTTTT MODE = ", MODE + "    " + sendData[9]);

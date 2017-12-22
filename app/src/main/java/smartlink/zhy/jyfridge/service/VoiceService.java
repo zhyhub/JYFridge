@@ -283,13 +283,13 @@ public class VoiceService extends AccessibilityService {
                 mIatResults.clear();
 
                 // 设置参数
-                    setParam();
-                    ret = mIat.startListening(mRecognizerListener);
-                    if (ret != ErrorCode.SUCCESS) {
-                        showTip("听写失败,错误码：" + ret);
-                    } else {
-                        showTip(getString(R.string.text_begin));
-                    }
+                setParam();
+                ret = mIat.startListening(mRecognizerListener);
+                if (ret != ErrorCode.SUCCESS) {
+                    showTip("听写失败,错误码：" + ret);
+                } else {
+                    showTip(getString(R.string.text_begin));
+                }
             } else {
                 showTip(error.getPlainDescription(true));
             }
@@ -356,7 +356,7 @@ public class VoiceService extends AccessibilityService {
                     L.e(TAG, "onKeyEvent  播放睡前故事暂停");
                 }
 
-                int code = mTts.startSpeaking("我在，您说", mTtsListener);
+                int code = mTts.startSpeaking("我在", mTtsListener);
                 /*
                  * 只保存音频不进行播放接口,调用此接口请注释startSpeaking接口
 		         * text:要合成的文本，uri:需要保存的音频全路径，listener:回调接口
@@ -611,13 +611,15 @@ public class VoiceService extends AccessibilityService {
                             break;
                         case 4://获取睡前故事url
                             TTS(entity);
-                            List<Song> queue = new ArrayList<>();
-                            queue.add(getSong(entity.getUrl().replace("\\", "")));
-                            MusicPlayer.getPlayer().setQueue(queue, 0);
-                            L.e(TAG, "sendMsg  播放睡前故事播放" + entity.getUrl().replace("\\", ""));
-                            if (mTts.isSpeaking()) mTts.stopSpeaking();
-                            if (mIat.isListening()) mIat.stopListening();
-                            isPause = true;
+                            if (entity.getUrl() != null && !"".equals(entity.getUrl())) {
+                                List<Song> queue = new ArrayList<>();
+                                queue.add(getSong(entity.getUrl().replace("\\", "")));
+                                MusicPlayer.getPlayer().setQueue(queue, 0);
+                                L.e(TAG, "sendMsg  播放睡前故事播放" + entity.getUrl().replace("\\", ""));
+                                if (mTts.isSpeaking()) mTts.stopSpeaking();
+                                if (mIat.isListening()) mIat.stopListening();
+                                isPause = true;
+                            }
                             break;
                         case 5://暂停
                             L.e(TAG, "sendMsg  播放睡前故事暂停");
@@ -843,7 +845,7 @@ public class VoiceService extends AccessibilityService {
     }
 
     private void TTS(BaseEntity entity) {
-        if (!entity.getText().equals("")) {
+        if (entity != null && entity.getText() != null && !entity.getText().equals("")) {
             mTts.startSpeaking(entity.getText(), mTtsListener);
         }
     }
@@ -987,15 +989,15 @@ public class VoiceService extends AccessibilityService {
             MODE = sendData[2];
             Log.e("TTTTTTTTT MODE = ", MODE + "    " + sendData[9]);
 
-            if ((sendData[4] & 0x01) != 0 && !isOpen1) {
-                L.e(TAG, "冷藏室门   开了");
-                isOpen1 = true;
-                OpenDoor();
-            } else if ((sendData[4] & 0x01) == 0) {
-                L.e(TAG, "冷藏室门   关了");
-                isOpen1 = false;
-                CloseDoor();
-            }
+//            if ((sendData[4] & 0x01) != 0 && !isOpen1) {
+//                L.e(TAG, "冷藏室门   开了");
+//                isOpen1 = true;
+//                OpenDoor();
+//            } else if ((sendData[4] & 0x01) == 0) {
+//                L.e(TAG, "冷藏室门   关了");
+//                isOpen1 = false;
+//                CloseDoor();
+//            }
 
 //            if ((sendData[4] & 0x02) != 0 && !isOpen2) {
 //                L.e(TAG, "冷冻门   开了");

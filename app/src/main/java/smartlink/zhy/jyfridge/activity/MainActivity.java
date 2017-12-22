@@ -57,7 +57,7 @@ import smartlink.zhy.jyfridge.utils.L;
  * 陀螺仪达到一定度数后自动跳转到拍照界面
  */
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity{
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -212,33 +212,4 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         L.e(TAG, "onPause");
     }
 
-    @Override
-    public void onClick(View v) {
-        PlayEvent playEvent;
-        switch (v.getId()) {
-            case R.id.button_play://开始
-                playEvent = new PlayEvent();
-                List<Song> queue = new ArrayList<>();
-                queue.add(getSong("http://audio.xmcdn.com/group36/M03/F0/1D/wKgJUlow8YSwunhrAFwiSKNGgIQ906.m4a"));
-                playEvent.setAction(PlayEvent.Action.PLAY);
-                playEvent.setQueue(queue);
-                EventBus.getDefault().post(playEvent);
-                break;
-            case R.id.button_pause://暂停
-                playEvent = new PlayEvent();
-                playEvent.setAction(PlayEvent.Action.PAUSE);
-                EventBus.getDefault().post(playEvent);
-                break;
-            case R.id.button_stop://停止
-                playEvent=new PlayEvent();
-                playEvent.setAction(PlayEvent.Action.STOP);
-                EventBus.getDefault().post(playEvent);
-                break;
-            case R.id.button_resume://恢复
-                playEvent=new PlayEvent();
-                playEvent.setAction(PlayEvent.Action.RESUME);
-                EventBus.getDefault().post(playEvent);
-                break;
-        }
-    }
 }

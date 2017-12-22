@@ -834,6 +834,18 @@ public class VoiceService extends AccessibilityService {
                         SignwayManager.GPIOGroup.GPIO0, SignwayManager.GPIONum.PD2);
                 int state = mSignwayManager.getGpioStatus(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN24);
                 L.e(TAG, "  state  : " + state);
+//                if (state == 1 && !isRed) {
+//                    if (mTts.isSpeaking()) {
+//                        mTts.stopSpeaking();
+//                    }
+//                    if (mIat.isListening()) {
+//                        mIat.stopListening();
+//                    }
+//                    mTts.startSpeaking("主人，您来啦！", mTtsListener);
+//                    isRed = true;
+//                } else if (state == 0) {
+//                    isRed = false;
+//                }
                 redHandler.postDelayed(redUpdate, 500);
             }
         };

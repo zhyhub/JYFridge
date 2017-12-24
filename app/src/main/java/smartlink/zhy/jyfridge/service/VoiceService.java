@@ -1094,15 +1094,15 @@ public class VoiceService extends AccessibilityService {
             MODE = sendData[2];
             Log.e("TTTTTTTTT MODE = ", MODE + "    " + sendData[9]);
 
-//            if ((sendData[4] & 0x01) != 0 && !isOpen1) {
-//                L.e(TAG, "冷藏室门   开了");
-//                isOpen1 = true;
-//                OpenDoor();
-//            } else if ((sendData[4] & 0x01) == 0) {
-//                L.e(TAG, "冷藏室门   关了");
-//                isOpen1 = false;
-//                CloseDoor();
-//            }
+            if ((sendData[4] & 0x01) != 0 && !isOpen1) {
+                L.e(TAG, "冷藏室门   开了");
+                isOpen1 = true;
+                OpenDoor();
+            } else if ((sendData[4] & 0x01) == 0) {
+                L.e(TAG, "冷藏室门   关了");
+                isOpen1 = false;
+                CloseDoor();
+            }
 
 //            if ((sendData[4] & 0x02) != 0 && !isOpen2) {
 //                L.e(TAG, "冷冻门   开了");

@@ -559,6 +559,8 @@ public class VoiceService extends AccessibilityService {
 
     private void NearOverDue() {
         BaseOkHttpClient.newBuilder()
+                .addParam("Ingredients.refrigeratorId", ConstantPool.FridgeId)
+                .addParam("Ingredients.userId", ConstantPool.UserID)
                 .get()
                 .url(ConstantPool.NearOverdue)
                 .build().enqueue(new BaseCallBack() {
@@ -606,8 +608,8 @@ public class VoiceService extends AccessibilityService {
                 .addParam("currentVolume", currentVolume)
                 .addParam("maxVolume", maxVolume)
                 .addParam("data", Arrays.toString(sendData))
-                .addParam("user_id", "123456")
-                .addParam("refrigeratorId", "1")
+                .addParam("user_id", ConstantPool.UserID)
+                .addParam("refrigeratorId", ConstantPool.FridgeId)
                 .get()
                 .url(ConstantPool.AI)
                 .build().enqueue(new BaseCallBack() {

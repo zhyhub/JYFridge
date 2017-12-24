@@ -566,6 +566,7 @@ public class VoiceService extends AccessibilityService {
                 .build().enqueue(new BaseCallBack() {
             @Override
             public void onSuccess(Object o) {
+                L.e(TAG, "NearOverDue  onSuccess");
                 Gson gson = new Gson();
                 BaseEntity entity = gson.fromJson(o.toString(), BaseEntity.class);
                 if (entity != null && entity.getCode() == 1) {
@@ -576,19 +577,19 @@ public class VoiceService extends AccessibilityService {
                         if (mIat.isListening()) {
                             mIat.stopListening();
                         }
-                        mTts.startSpeaking(entity.getText(), mTtsListener);
+                        mTts.startSpeaking("冰箱里的"+entity.getText()+"快过期了，请尽快食用", mTtsListener);
                     }
                 }
             }
 
             @Override
             public void onError(int code) {
-
+                L.e(TAG, "NearOverDue  onError");
             }
 
             @Override
             public void onFailure(Call call, IOException e) {
-
+                L.e(TAG, "NearOverDue  onFailure");
             }
         });
     }

@@ -24,7 +24,7 @@ public class ConstantPool {
     public static final String NearOverdue = BASE_URL + "in/ingredients!nearOverdue";
     //    public static final String UpLoadInfo = "http://192.168.100.173:8080/imgTest/in/img!uploadInfo";
 //    public static final String UpLoadInfo = "http://192.168.199.182:8080/imgTest/in/img!uploadInfo";
-    public static final String UpLoadInfo = "http://112.124.102.114:8090/imgTest/in/img!uploadInfo";
+    public static final String UpLoadInfo = BASE_URL + "in/img!uploadInfo";
 
     public static final String OPEN = BASE_URL + "in/recognition!open";
     public static final String CLOSE = BASE_URL + "in/recognition!close";

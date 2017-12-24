@@ -7,7 +7,7 @@ package smartlink.zhy.jyfridge;
 public class ConstantPool {
 
     public static final int FridgeId = 1;
-    public static final int UserID = 123456;
+    public static final int UserID = 12345;
 
     public static final int Camera_0 = 0;
     public static final int Camera_1 = 1;

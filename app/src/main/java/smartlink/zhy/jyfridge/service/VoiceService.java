@@ -548,6 +548,9 @@ public class VoiceService extends AccessibilityService {
         writeHandler.removeCallbacks(writeUpdate);//停止指令
         readHandler.removeCallbacks(readUpdate);//停止指令
         redHandler.removeCallbacks(redUpdate);//停止指令
+        lightHandler.removeCallbacks(lightUpdate);//停止指令
+        volumeDownHandler.removeCallbacks(volumeDownUpdate);//停止指令
+        volumeUpHandler.removeCallbacks(volumeUpUpdate);//停止指令
         requestCode = 0;
         closeSocket();
         unregisterReceiver(receiver);

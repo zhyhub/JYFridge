@@ -557,6 +557,40 @@ public class VoiceService extends AccessibilityService {
         super.onDestroy();
     }
 
+    private void NearOverDue() {
+        BaseOkHttpClient.newBuilder()
+                .get()
+                .url(ConstantPool.NearOverdue)
+                .build().enqueue(new BaseCallBack() {
+            @Override
+            public void onSuccess(Object o) {
+                Gson gson = new Gson();
+                BaseEntity entity = gson.fromJson(o.toString(), BaseEntity.class);
+                if (entity != null && entity.getCode() == 1) {
+                    if (entity.getText() != null && !"".equals(entity.getText())) {
+                        if (mTts.isSpeaking()) {
+                            mTts.stopSpeaking();
+                        }
+                        if (mIat.isListening()) {
+                            mIat.stopListening();
+                        }
+                        mTts.startSpeaking(entity.getText(), mTtsListener);
+                    }
+                }
+            }
+
+            @Override
+            public void onError(int code) {
+
+            }
+
+            @Override
+            public void onFailure(Call call, IOException e) {
+
+            }
+        });
+    }
+
 //=============================================================  下面是请求海知语音获取意图 并做相应的指令操作 ======================================================================================================
 
     private Song getSong(String url) {
@@ -649,18 +683,18 @@ public class VoiceService extends AccessibilityService {
                             TTS(entity);
                             isPause = false;
                             break;
-                        case 101://启动-手机无线充电设备
-                            TTS(entity);
-                            break;
-                        case 102://关闭-手机无线充电设备
-                            TTS(entity);
-                            break;
-                        case 103://启动-台灯无线充电设备
-                            TTS(entity);
-                            break;
-                        case 104://关闭-台灯无线充电设备
-                            TTS(entity);
-                            break;
+//                        case 101://启动-手机无线充电设备
+//                            TTS(entity);
+//                            break;
+//                        case 102://关闭-手机无线充电设备
+//                            TTS(entity);
+//                            break;
+//                        case 103://启动-台灯无线充电设备
+//                            TTS(entity);
+//                            break;
+//                        case 104://关闭-台灯无线充电设备
+//                            TTS(entity);
+//                            break;
                         case 107://启动-电灯
                             CurrentTemp = 60;
                             ZigbeeBean zigbeeOpen = new ZigbeeBean();
@@ -903,13 +937,7 @@ public class VoiceService extends AccessibilityService {
                 int state = mSignwayManager.getGpioStatus(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN24);
                 L.e(TAG, "  state  : " + state);
                 if (state == 1 && !isRed) {
-                    if (mTts.isSpeaking()) {
-                        mTts.stopSpeaking();
-                    }
-                    if (mIat.isListening()) {
-                        mIat.stopListening();
-                    }
-                    mTts.startSpeaking("主人，您来啦！", mTtsListener);
+                    NearOverDue();
                     isRed = true;
                 } else if (state == 0) {
                     isRed = false;

@@ -165,13 +165,21 @@ public class VoiceService extends AccessibilityService {
     Handler readHandler = null;
     Handler redHandler = null;
     Handler resultHandler = null;
+    Handler lightHandler = null;
+    Handler volumeUpHandler = null;
+    Handler volumeDownHandler = null;
 
     Runnable redUpdate = null;
     Runnable writeUpdate = null;
     Runnable readUpdate = null;
     Runnable resultUpdate = null;
+    Runnable lightUpdate = null;
+    Runnable volumeUpUpdate = null;
+    Runnable volumeDownUpdate = null;
 
     private boolean isRed = false;
+    private boolean isLight = false;
+    private boolean isVolumeUp = false;
 
     int readLength;
     int fid = -1;
@@ -881,33 +889,99 @@ public class VoiceService extends AccessibilityService {
         };
         readHandler.post(readUpdate);
 
+        /*P24 红外线感应打开关闭*/
         redHandler = new Handler();
         redUpdate = new Runnable() {
             @Override
             public void run() {
                 mSignwayManager.openGpioDevice();
-                //配置SWH5528_J9_PIN1,对应GPIO2_A6
                 mSignwayManager.setGpioNum(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN24,
                         SignwayManager.GPIOGroup.GPIO0, SignwayManager.GPIONum.PD2);
                 int state = mSignwayManager.getGpioStatus(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN24);
                 L.e(TAG, "  state  : " + state);
-//                if (state == 1 && !isRed) {
-//                    if (mTts.isSpeaking()) {
-//                        mTts.stopSpeaking();
-//                    }
-//                    if (mIat.isListening()) {
-//                        mIat.stopListening();
-//                    }
-//                    mTts.startSpeaking("主人，您来啦！", mTtsListener);
-//                    isRed = true;
-//                } else if (state == 0) {
-//                    isRed = false;
-//                }
+                if (state == 1 && !isRed) {
+                    if (mTts.isSpeaking()) {
+                        mTts.stopSpeaking();
+                    }
+                    if (mIat.isListening()) {
+                        mIat.stopListening();
+                    }
+                    mTts.startSpeaking("主人，您来啦！", mTtsListener);
+                    isRed = true;
+                } else if (state == 0) {
+                    isRed = false;
+                }
                 redHandler.postDelayed(redUpdate, 500);
             }
         };
         redHandler.post(redUpdate);
 
+        /*P23 呼吸灯打开关闭*/
+        lightHandler = new Handler();
+        lightUpdate = new Runnable() {
+            @Override
+            public void run() {
+                mSignwayManager.openGpioDevice();
+                mSignwayManager.setGpioNum(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN23,
+                        SignwayManager.GPIOGroup.GPIO0, SignwayManager.GPIONum.PD4);
+                int state = mSignwayManager.getGpioStatus(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN23);
+                if (state == 1 && !isLight) {
+                    mSignwayManager.setHighGpio(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN23);
+                    L.e(TAG, "  Light  高   开");
+                    isLight = true;
+                } else if (state == 0) {
+                    mSignwayManager.setLowGpio(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN23);
+                    L.e(TAG, "  Light  低   关");
+                    isLight = false;
+                }
+                lightHandler.postDelayed(lightUpdate, 500);
+            }
+        };
+        lightHandler.post(lightUpdate);
+
+        /*P9 按键音量增加*/
+        volumeUpHandler = new Handler();
+        volumeUpUpdate = new Runnable() {
+            @Override
+            public void run() {
+                mSignwayManager.openGpioDevice();
+                mSignwayManager.setGpioNum(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN9,
+                        SignwayManager.GPIOGroup.GPIO1, SignwayManager.GPIONum.PC5);
+                int state = mSignwayManager.getGpioStatus(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN9);
+                if (state == 1 && !isVolumeUp) {
+                    L.e(TAG, "  volume PIN9 高   增大");
+                    if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) < audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)) {
+                        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) + 1, 0);
+                    }
+                    isVolumeUp = true;
+                } else if (state == 0) {
+                    isVolumeUp = false;
+                }
+                volumeUpHandler.postDelayed(volumeUpUpdate, 500);
+            }
+        };
+        volumeUpHandler.post(volumeUpUpdate);
+
+        /*P11  按键音量降低*/
+        volumeDownHandler = new Handler();
+        volumeDownUpdate = new Runnable() {
+            @Override
+            public void run() {
+                mSignwayManager.openGpioDevice();
+                mSignwayManager.setGpioNum(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN11,
+                        SignwayManager.GPIOGroup.GPIO1, SignwayManager.GPIONum.PB7);
+                int state = mSignwayManager.getGpioStatus(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN11);
+                if (state == 1 && !isVolumeUp) {
+                    L.e(TAG, "  volume PIN11 高   降低");
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) - 1, 0);
+                    isVolumeUp = true;
+                } else if (state == 0) {
+                    isVolumeUp = false;
+                }
+                volumeDownHandler.postDelayed(volumeDownUpdate, 500);
+            }
+        };
+        volumeDownHandler.post(volumeDownUpdate);
     }
 
     private void sendByte() {

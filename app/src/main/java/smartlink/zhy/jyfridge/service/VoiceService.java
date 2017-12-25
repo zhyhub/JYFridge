@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
-import android.media.FaceDetector;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -29,10 +28,8 @@ import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechRecognizer;
 import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SynthesizerListener;
-import com.iflytek.sunflower.FlowerCollector;
 import com.signway.SignwayManager;
 
-import org.greenrobot.eventbus.EventBus;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.litepal.crud.DataSupport;
@@ -55,7 +52,6 @@ import okhttp3.Call;
 import smartlink.zhy.jyfridge.ConstantPool;
 import smartlink.zhy.jyfridge.R;
 import smartlink.zhy.jyfridge.bean.BaseEntity;
-import smartlink.zhy.jyfridge.bean.PlayEvent;
 import smartlink.zhy.jyfridge.bean.RemindBean;
 import smartlink.zhy.jyfridge.bean.Song;
 import smartlink.zhy.jyfridge.bean.ZigbeeBean;
@@ -368,9 +364,6 @@ public class VoiceService extends AccessibilityService {
     protected boolean onKeyEvent(KeyEvent event) {
         switch (event.getKeyCode()) {
             case KeyEvent.KEYCODE_F1:
-                mSignwayManager.openGpioDevice();
-                //接受到f1信号，设备已经被唤醒，调用讯飞语音识别
-                L.e(TAG, "接受到f1信号，设备已经被唤醒，调用讯飞语音识别");
 
                 if (mTts.isSpeaking()) {
                     mTts.stopSpeaking();
@@ -378,6 +371,10 @@ public class VoiceService extends AccessibilityService {
                 if (mIat.isListening()) {
                     mIat.stopListening();
                 }
+
+                mSignwayManager.openGpioDevice();
+                //接受到f1信号，设备已经被唤醒，调用讯飞语音识别
+                L.e(TAG, "接受到f1信号，设备已经被唤醒，调用讯飞语音识别");
 
                 if (MusicPlayer.getPlayer().isPlaying()) {
                     MusicPlayer.getPlayer().pause();
@@ -521,7 +518,7 @@ public class VoiceService extends AccessibilityService {
             String voicer = "nannan";
             mTts.setParameter(SpeechConstant.VOICE_NAME, voicer);
             //设置合成语速
-            mTts.setParameter(SpeechConstant.SPEED, "55");
+            mTts.setParameter(SpeechConstant.SPEED, "80");
             //设置合成音调
             mTts.setParameter(SpeechConstant.PITCH, "60");
             //设置合成音量
@@ -1027,6 +1024,7 @@ public class VoiceService extends AccessibilityService {
                 if (!isSet) {
                     isSet = true;
                     readLength = mSignwayManager.readUart(fid, rbuf, rbuf.length);
+                    L.e(TAG,"  readLength  " + readLength);
                     if (readLength > 47) {
                         setNewData(rbuf, readLength);
                     }
@@ -1085,25 +1083,25 @@ public class VoiceService extends AccessibilityService {
                 OpenDoor();
             } else if ((sendData[4] & 0x01) == 0) {
                 L.e(TAG, "冷藏室门   关了");
-                isOpen1 = false;
                 CloseDoor();
+                isOpen1 = false;
             }
 
-//            if ((sendData[4] & 0x02) != 0 && !isOpen2) {
-//                L.e(TAG, "冷冻门   开了");
-//                isOpen2 = true;
-//            } else if ((sendData[4] & 0x02) == 0) {
-//                L.e(TAG, "冷冻门   关了");
-//                isOpen2 = false;
-//            }
-//
-//            if ((sendData[4] & 0x08) != 0 && !isOpen8) {
-//                L.e(TAG, "变温门   开了");
-//                isOpen8 = true;
-//            } else if ((sendData[4] & 0x08) == 0) {
-//                L.e(TAG, "变温门   关了");
-//                isOpen8 = false;
-//            }
+            if ((sendData[4] & 0x02) != 0 && !isOpen2) {
+                L.e(TAG, "冷冻门   开了");
+                isOpen2 = true;
+            } else if ((sendData[4] & 0x02) == 0) {
+                L.e(TAG, "冷冻门   关了");
+                isOpen2 = false;
+            }
+
+            if ((sendData[4] & 0x08) != 0 && !isOpen8) {
+                L.e(TAG, "变温门   开了");
+                isOpen8 = true;
+            } else if ((sendData[4] & 0x08) == 0) {
+                L.e(TAG, "变温门   关了");
+                isOpen8 = false;
+            }
 //
 //            if ((sendData[4] & 0x40) != 0 && !isOpen40) {
 //                L.e(TAG, "红外开关   开了");

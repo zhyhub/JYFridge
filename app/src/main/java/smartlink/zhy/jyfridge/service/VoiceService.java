@@ -165,21 +165,13 @@ public class VoiceService extends AccessibilityService {
     Handler readHandler = null;
     Handler redHandler = null;
     Handler resultHandler = null;
-    Handler lightHandler = null;
-    Handler volumeUpHandler = null;
-    Handler volumeDownHandler = null;
 
     Runnable redUpdate = null;
     Runnable writeUpdate = null;
     Runnable readUpdate = null;
     Runnable resultUpdate = null;
-    Runnable lightUpdate = null;
-    Runnable volumeUpUpdate = null;
-    Runnable volumeDownUpdate = null;
 
     private boolean isRed = false;
-    private boolean isLight = false;
-    private boolean isVolumeUp = false;
 
     int readLength;
     int fid = -1;
@@ -348,6 +340,7 @@ public class VoiceService extends AccessibilityService {
     protected boolean onKeyEvent(KeyEvent event) {
         switch (event.getKeyCode()) {
             case KeyEvent.KEYCODE_F1:
+                mSignwayManager.openGpioDevice();
                 //接受到f1信号，设备已经被唤醒，调用讯飞语音识别
                 L.e(TAG, "接受到f1信号，设备已经被唤醒，调用讯飞语音识别");
 
@@ -363,7 +356,7 @@ public class VoiceService extends AccessibilityService {
                     isPause = true;
                     L.e(TAG, "onKeyEvent  播放睡前故事暂停");
                 }
-
+                mSignwayManager.setHighGpio(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN23);
                 int code = mTts.startSpeaking("我在", mTtsListener);
                 /*
                  * 只保存音频不进行播放接口,调用此接口请注释startSpeaking接口
@@ -372,6 +365,16 @@ public class VoiceService extends AccessibilityService {
                 if (code != ErrorCode.SUCCESS) {
                     showTip("语音合成失败,错误码: " + code);
                 }
+                break;
+            case KeyEvent.KEYCODE_F10://按键音量增加
+                L.e(TAG, "接受到f10信号，音量增加按钮");
+                if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) < audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)) {
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) + 1, 0);
+                }
+                break;
+            case KeyEvent.KEYCODE_F11://按键音量减少
+                L.e(TAG, "接受到f11信号，音量减少按钮");
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) - 1, 0);
                 break;
         }
         return super.onKeyEvent(event);
@@ -398,13 +401,12 @@ public class VoiceService extends AccessibilityService {
             // 错误码：10118(您没有说话)，可能是录音机权限被禁，需要提示用户打开应用的录音权限。
             // 如果使用本地功能（语记）需要提示用户开启语记的录音权限。
             showTip(error.getPlainDescription(true));
-
+            mSignwayManager.setLowGpio(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN23);
             if (isPause) {
                 MusicPlayer.getPlayer().resume();
                 isPause = false;
                 L.e(TAG, "onCompleted  播放睡前故事恢复播放");
             }
-
         }
 
         @Override
@@ -548,9 +550,6 @@ public class VoiceService extends AccessibilityService {
         writeHandler.removeCallbacks(writeUpdate);//停止指令
         readHandler.removeCallbacks(readUpdate);//停止指令
         redHandler.removeCallbacks(redUpdate);//停止指令
-        lightHandler.removeCallbacks(lightUpdate);//停止指令
-        volumeDownHandler.removeCallbacks(volumeDownUpdate);//停止指令
-        volumeUpHandler.removeCallbacks(volumeUpUpdate);//停止指令
         requestCode = 0;
         closeSocket();
         unregisterReceiver(receiver);
@@ -577,7 +576,7 @@ public class VoiceService extends AccessibilityService {
                         if (mIat.isListening()) {
                             mIat.stopListening();
                         }
-                        mTts.startSpeaking("冰箱里的"+entity.getText()+"快过期了，请尽快食用", mTtsListener);
+                        mTts.startSpeaking("冰箱里的" + entity.getText() + "快过期了，请尽快食用", mTtsListener);
                     }
                 }
             }
@@ -950,72 +949,26 @@ public class VoiceService extends AccessibilityService {
         };
         redHandler.post(redUpdate);
 
-        /*P23 呼吸灯打开关闭*/
-        lightHandler = new Handler();
-        lightUpdate = new Runnable() {
-            @Override
-            public void run() {
-                mSignwayManager.openGpioDevice();
-                mSignwayManager.setGpioNum(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN23,
-                        SignwayManager.GPIOGroup.GPIO0, SignwayManager.GPIONum.PD4);
-                int state = mSignwayManager.getGpioStatus(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN23);
-                if (state == 1 && !isLight) {
-                    mSignwayManager.setHighGpio(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN23);
-                    L.e(TAG, "  Light  高   开");
-                    isLight = true;
-                } else if (state == 0) {
-                    mSignwayManager.setLowGpio(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN23);
-                    L.e(TAG, "  Light  低   关");
-                    isLight = false;
-                }
-                lightHandler.postDelayed(lightUpdate, 500);
-            }
-        };
-        lightHandler.post(lightUpdate);
+//        /*P23 呼吸灯打开关闭*/
+//        lightHandler = new Handler();
+//        lightUpdate = new Runnable() {
+//            @Override
+//            public void run() {
+//                mSignwayManager.setGpioNum(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN23,
+//                        SignwayManager.GPIOGroup.GPIO0, SignwayManager.GPIONum.PD4);
+//                int state = mSignwayManager.getGpioStatus(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN23);
+//                if (state == 1 && !isLight) {
+//                    L.e(TAG, "  Light  高   开");
+//                    isLight = true;
+//                } else if (state == 0) {
+//                    L.e(TAG, "  Light  低   关");
+//                    isLight = false;
+//                }
+//                lightHandler.postDelayed(lightUpdate, 500);
+//            }
+//        };
+//        lightHandler.post(lightUpdate);
 
-        /*P9 按键音量增加*/
-        volumeUpHandler = new Handler();
-        volumeUpUpdate = new Runnable() {
-            @Override
-            public void run() {
-                mSignwayManager.openGpioDevice();
-                mSignwayManager.setGpioNum(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN9,
-                        SignwayManager.GPIOGroup.GPIO1, SignwayManager.GPIONum.PC5);
-                int state = mSignwayManager.getGpioStatus(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN9);
-                if (state == 1 && !isVolumeUp) {
-                    L.e(TAG, "  volume PIN9 高   增大");
-                    if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) < audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)) {
-                        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) + 1, 0);
-                    }
-                    isVolumeUp = true;
-                } else if (state == 0) {
-                    isVolumeUp = false;
-                }
-                volumeUpHandler.postDelayed(volumeUpUpdate, 500);
-            }
-        };
-        volumeUpHandler.post(volumeUpUpdate);
-
-        /*P11  按键音量降低*/
-        volumeDownHandler = new Handler();
-        volumeDownUpdate = new Runnable() {
-            @Override
-            public void run() {
-                mSignwayManager.openGpioDevice();
-                mSignwayManager.setGpioNum(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN11,
-                        SignwayManager.GPIOGroup.GPIO1, SignwayManager.GPIONum.PB7);
-                int state = mSignwayManager.getGpioStatus(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN11);
-                if (state == 1 && !isVolumeUp) {
-                    L.e(TAG, "  volume PIN11 高   降低");
-                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) - 1, 0);
-                    isVolumeUp = true;
-                } else if (state == 0) {
-                    isVolumeUp = false;
-                }
-                volumeDownHandler.postDelayed(volumeDownUpdate, 500);
-            }
-        };
-        volumeDownHandler.post(volumeDownUpdate);
     }
 
     private void sendByte() {

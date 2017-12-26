@@ -91,9 +91,9 @@ public class VoiceService extends AccessibilityService {
      * 串口接入
      */
 
-    private boolean isOpen1 = false;
-    private boolean isOpen2 = false;
-    private boolean isOpen8 = false;
+    private boolean isOpenDoor1 = false;
+    private boolean isOpenDoor2 = false;
+    private boolean isOpenDoor8 = false;
 
     private byte MODE;
 
@@ -991,7 +991,7 @@ public class VoiceService extends AccessibilityService {
                 if (!isSet) {
                     isSet = true;
                     readLength = mSignwayManager.readUart(fid, rbuf, rbuf.length);
-                    L.e(TAG, "  readLength  " + readLength);
+                    L.e(TAG, "  readLength  " + readLength + "   " + Arrays.toString(sendData));
                     if (readLength > 47) {
                         setNewData(rbuf, readLength);
                     }
@@ -1036,39 +1036,79 @@ public class VoiceService extends AccessibilityService {
                 sendData[j] = newData[i];
                 i++;
                 if (i > (readLength - 1)) {
-                    return;
+                    break;
                 }
             }
-            L.e(TAG, Arrays.toString(sendData));
 
             MODE = sendData[2];
-            Log.e("TTTTTTTTT MODE = ", MODE + "    " + sendData[9]);
+            L.e("TTTTTTTTTTTTTTTTTTTTTT MODE = ", MODE + "    " + sendData[4]);
 
-            if ((sendData[4] & 0x01) != 0 && !isOpen1) {
-                L.e(TAG, "冷藏室门   开了");
-                isOpen1 = true;
+            /*
+             * 现在冷藏室开关门的逻辑是反的  等冰箱板子改好了  android代码还要改回来
+             */
+            if ((sendData[4] & 0x01) != 0) {
+                if (!isOpenDoor1) {
+                    L.e(TAG, "冷藏室门   开了");
+                    CloseDoor();
+                    isOpenDoor1 = true;
+                } else {
+                    L.e(TAG, "冷藏室门   ------------开了");
+                }
+            } else {
+                L.e(TAG, "冷藏室门   =============关了");
+                isOpenDoor1 = false;
                 OpenDoor();
-            } else if ((sendData[4] & 0x01) == 0) {
-                L.e(TAG, "冷藏室门   关了");
-                CloseDoor();
-                isOpen1 = false;
             }
 
-            if ((sendData[4] & 0x02) != 0 && !isOpen2) {
-                L.e(TAG, "冷冻门   开了");
-                isOpen2 = true;
-            } else if ((sendData[4] & 0x02) == 0) {
-                L.e(TAG, "冷冻门   关了");
-                isOpen2 = false;
+//            if ((sendData[4] & 0x02) != 0) {
+//                if (!isOpenDoor2) {
+//                    L.e(TAG, "冷冻门   开了");
+//                    isOpenDoor2 = true;
+//                }else {
+//                    L.e(TAG, "冷冻门   --------------开了");
+//                }
+//            } else{
+//                L.e(TAG, "冷冻门   ================关了");
+//                isOpenDoor2 = false;
+//            }
+
+            //            if ((sendData[4] & 0x08) != 0) {
+//                if (!isOpenDoor8) {
+//                    L.e(TAG, "变温门   开了");
+//                    isOpenDoor8 = true;
+//                }else {
+//                    L.e(TAG, "变温门   ---------------开了");
+//                }
+//            } else{
+//                L.e(TAG, "变温门   ================关了");
+//                isOpenDoor8 = false;
+//            }
+
+            if ((sendData[4] & 0x02) != 0) {
+                if (!isOpenDoor8) {
+                    L.e(TAG, "变温门   开了");
+                    isOpenDoor8 = true;
+                } else {
+                    L.e(TAG, "变温门   ---------------开了");
+                }
+            } else {
+                L.e(TAG, "变温门   ================关了");
+                isOpenDoor8 = false;
             }
 
-            if ((sendData[4] & 0x08) != 0 && !isOpen8) {
-                L.e(TAG, "变温门   开了");
-                isOpen8 = true;
-            } else if ((sendData[4] & 0x08) == 0) {
-                L.e(TAG, "变温门   关了");
-                isOpen8 = false;
+            if ((sendData[4] & 0x04) != 0) {
+                if (!isOpenDoor2) {
+                    L.e(TAG, "冷冻门   开了");
+                    isOpenDoor2 = true;
+                } else {
+                    L.e(TAG, "冷冻门   --------------开了");
+                }
+            } else {
+                L.e(TAG, "冷冻门   ================关了");
+                isOpenDoor2 = false;
             }
+
+
         }
     }
 

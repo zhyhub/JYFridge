@@ -33,7 +33,7 @@ public class MyApplication extends LitePalApplication{
         // 以下语句用于设置日志开关（默认开启），设置成false时关闭语音云SDK日志打印
         // Setting.setShowLog(false);
 
-        startAccessibilityService(MyApplication.this);
+//        startAccessibilityService(MyApplication.this);
 
         super.onCreate();
     }

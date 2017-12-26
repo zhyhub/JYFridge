@@ -17,10 +17,10 @@ android {
 
     signingConfigs{
         release {
-            storeFile file('G:/android_sign/JoyoungRobotPlatform.jks')
-            storePassword 'joyoungyanjiuyuan2017'
-            keyAlias 'platform'
-            keyPassword 'joyoungyanjiuyuan2017'
+            storeFile file('G:/android_sign/smarthood.jks')
+            storePassword '123456'
+            keyAlias 'smarthood'
+            keyPassword '123456'
         }
     }
 

@@ -40,12 +40,12 @@ public class MyApplication extends LitePalApplication {
     }
 
     private void startAccessibilityService(Context context) {
-        L.d(TAG, "startAccessibilityService() called");
+        L.e(TAG, "startAccessibilityService() called");
         String enabledServicesSetting = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
-        L.d(TAG, "enabledServicesSetting: " + enabledServicesSetting);
+        L.e(TAG, "enabledServicesSetting: " + enabledServicesSetting);
         ComponentName selfComponentName = new ComponentName(context.getPackageName(), VoiceService.class.getName());
         String flattenToString = selfComponentName.flattenToString();
-        L.d(TAG, "flattenToString: " + flattenToString);
+        L.e(TAG, "flattenToString: " + flattenToString);
         if (enabledServicesSetting == null || !enabledServicesSetting.contains(flattenToString)) {
             if (TextUtils.isEmpty(enabledServicesSetting) || TextUtils.equals(enabledServicesSetting, "null")) {
                 enabledServicesSetting = flattenToString;

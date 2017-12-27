@@ -409,6 +409,12 @@ public class VoiceService extends AccessibilityService {
         public void onEndOfSpeech() {
             // 此回调表示：检测到了语音的尾端点，已经进入识别过程，不再接受语音输入
             showTip("结束说话");
+            mSignwayManager.setLowGpio(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN23);
+            if (isPause) {
+                MusicPlayer.getPlayer().resume();
+                isPause = false;
+                L.e(TAG, "onCompleted  播放睡前故事恢复播放");
+            }
         }
 
         @Override
@@ -1043,46 +1049,23 @@ public class VoiceService extends AccessibilityService {
             MODE = sendData[2];
             L.e("TTTTTTTTTTTTTTTTTTTTTT MODE = ", MODE + "    " + sendData[4]);
 
-            /*
-             * 现在冷藏室开关门的逻辑是反的  等冰箱板子改好了  android代码还要改回来
-             */
             if ((sendData[4] & 0x01) != 0) {
                 if (!isOpenDoor1) {
-                    L.e(TAG, "冷藏室门   开了");
-                    CloseDoor();
+                    L.e(TAG, "冷藏室门   ------------开了");
+                    OpenDoor();
                     isOpenDoor1 = true;
                 } else {
-                    L.e(TAG, "冷藏室门   ------------开了");
+                    L.e(TAG, "冷藏室门  开了");
                 }
-            } else {
-                L.e(TAG, "冷藏室门   =============关了");
-                isOpenDoor1 = false;
-                OpenDoor();
+            } else if((sendData[4] & 0x01) == 0){
+                if(isOpenDoor1){
+                    L.e(TAG, "冷藏室门   ------------关了");
+                    CloseDoor();
+                    isOpenDoor1 = false;
+                }else {
+                    L.e(TAG, "冷藏室门  关了");
+                }
             }
-
-//            if ((sendData[4] & 0x02) != 0) {
-//                if (!isOpenDoor2) {
-//                    L.e(TAG, "冷冻门   开了");
-//                    isOpenDoor2 = true;
-//                }else {
-//                    L.e(TAG, "冷冻门   --------------开了");
-//                }
-//            } else{
-//                L.e(TAG, "冷冻门   ================关了");
-//                isOpenDoor2 = false;
-//            }
-
-            //            if ((sendData[4] & 0x08) != 0) {
-//                if (!isOpenDoor8) {
-//                    L.e(TAG, "变温门   开了");
-//                    isOpenDoor8 = true;
-//                }else {
-//                    L.e(TAG, "变温门   ---------------开了");
-//                }
-//            } else{
-//                L.e(TAG, "变温门   ================关了");
-//                isOpenDoor8 = false;
-//            }
 
             if ((sendData[4] & 0x02) != 0) {
                 if (!isOpenDoor8) {
@@ -1364,27 +1347,29 @@ public class VoiceService extends AccessibilityService {
             @Override
             public void onSuccess(Object o) {
                 L.e(TAG, "close  onSuccess" + o.toString());
-                closeHandler.sendEmptyMessage(100);
+//                closeHandler.sendEmptyMessage(100);
+//                resultHandler.removeCallbacks(resultUpdate);
             }
 
             @Override
             public void onError(int code) {
                 L.e(TAG, "close onError");
                 mTts.startSpeaking("哎呀，好像出问题了", mTtsListener);
-                closeHandler.sendEmptyMessage(100);
+//                closeHandler.sendEmptyMessage(100);
             }
 
             @Override
             public void onFailure(Call call, IOException e) {
                 L.e(TAG, "close onFailure" + e.getMessage());
-                closeHandler.sendEmptyMessage(100);
+//                closeHandler.sendEmptyMessage(100);
             }
         });
+        resultHandler.removeCallbacks(resultUpdate);
     }
 
     private void getResult() {
         BaseOkHttpClient.newBuilder()
-                .addParam("ingredients.refrigeratorId",ConstantPool.FridgeId)
+                .addParam("ingredients.refrigeratorId", ConstantPool.FridgeId)
                 .get()
                 .url(ConstantPool.GetResult)
                 .build().enqueue(new BaseCallBack() {

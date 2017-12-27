@@ -362,13 +362,13 @@ public class VoiceService extends AccessibilityService {
                     showTip("语音合成失败,错误码: " + code);
                 }
                 break;
-            case KeyEvent.KEYCODE_F10://按键音量增加
+            case KeyEvent.KEYCODE_F11://按键音量增加
                 L.e(TAG, "接受到f10信号，音量增加按钮");
                 if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) < audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)) {
                     audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) + 1, 0);
                 }
                 break;
-            case KeyEvent.KEYCODE_F11://按键音量减少
+            case KeyEvent.KEYCODE_F12://按键音量减少
                 L.e(TAG, "接受到f11信号，音量减少按钮");
                 audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) - 1, 0);
                 break;

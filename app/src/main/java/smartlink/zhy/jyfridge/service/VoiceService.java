@@ -1384,6 +1384,7 @@ public class VoiceService extends AccessibilityService {
 
     private void getResult() {
         BaseOkHttpClient.newBuilder()
+                .addParam("ingredients.refrigeratorId",ConstantPool.FridgeId)
                 .get()
                 .url(ConstantPool.GetResult)
                 .build().enqueue(new BaseCallBack() {

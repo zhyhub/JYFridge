@@ -218,7 +218,7 @@ public class VoiceService extends AccessibilityService {
         IntentFilter filter = new IntentFilter();
         filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         registerReceiver(receiver, filter);
-        L.e(TAG, "ControlService ControlService ControlService ControlService");
+        L.e(TAG, "VoiceService VoiceService VoiceService VoiceService");
     }
 
     /**

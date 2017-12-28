@@ -1378,13 +1378,15 @@ public class VoiceService extends AccessibilityService {
             @Override
             public void onSuccess(Object o) {
                 L.e(TAG, "getResult  onSuccess" + o.toString());
-                if (mIat.isListening()) {
-                    mIat.stopListening();
-                }
                 Gson gson = new Gson();
                 BaseEntity entity = gson.fromJson(o.toString(), BaseEntity.class);
                 if (entity.getCode() == 1) {
-                    mTts.startSpeaking(entity.getText(), mTtsListener);
+                    if (entity.getText() != null && !"".equals(entity.getText())) {
+                        if (mIat.isListening()) {
+                            mIat.stopListening();
+                        }
+                        mTts.startSpeaking(entity.getText(), mTtsListener);
+                    }
                 }
             }
 

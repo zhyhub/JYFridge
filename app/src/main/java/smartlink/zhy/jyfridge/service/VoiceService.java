@@ -1300,19 +1300,6 @@ public class VoiceService extends AccessibilityService {
 
 //=============================================================  下面是控制图像识别逻辑 ======================================================================================================
 
-    private Handler closeHandler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case 100:
-                    if (resultHandler != null && resultUpdate != null) {
-                        resultHandler.removeCallbacks(resultUpdate);
-                    }
-                    break;
-            }
-        }
-    };
-
     private void OpenDoor() {
         BaseOkHttpClient.newBuilder()
                 .get()
@@ -1353,8 +1340,6 @@ public class VoiceService extends AccessibilityService {
             @Override
             public void onSuccess(Object o) {
                 L.e(TAG, "close  onSuccess" + o.toString());
-//                closeHandler.sendEmptyMessage(100);
-//                resultHandler.removeCallbacks(resultUpdate);
             }
 
             @Override

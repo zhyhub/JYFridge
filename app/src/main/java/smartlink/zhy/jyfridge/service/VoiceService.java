@@ -95,8 +95,6 @@ public class VoiceService extends AccessibilityService {
     private boolean isOpenDoor2 = false;
     private boolean isOpenDoor8 = false;
 
-    private byte MODE;
-
     private static int CurrentTemp = 0;
 
     private byte DATA_0 = ConstantPool.Data0_beginning_commend;
@@ -146,8 +144,6 @@ public class VoiceService extends AccessibilityService {
     private byte DATA_44 = ConstantPool.Zero;
     private byte DATA_45 = ConstantPool.Zero;
     private byte DATA_46;
-
-    private byte[] data = new byte[]{};//写的数据
 
     private byte[] sendData = new byte[48];//读的数据
 
@@ -980,7 +976,7 @@ public class VoiceService extends AccessibilityService {
         DATA_23 = (byte) (DATA_0 + DATA_1 + DATA_2 + DATA_3 + DATA_4 + DATA_5 + DATA_6
                 + DATA_7 + DATA_8 + DATA_9 + DATA_10 + DATA_11 + DATA_12 + DATA_13 + DATA_14
                 + DATA_15 + DATA_16 + DATA_17 + DATA_18 + DATA_19 + DATA_20 + DATA_21 + DATA_22);
-        data = new byte[]{DATA_0, DATA_1, DATA_2, DATA_3, DATA_4, DATA_5, DATA_6, DATA_7, DATA_8, DATA_9, DATA_10, DATA_11, DATA_12, DATA_13, DATA_14, DATA_15, DATA_16, DATA_17, DATA_18, DATA_19, DATA_20, DATA_21, DATA_22, DATA_23};
+        byte[] data = new byte[]{DATA_0, DATA_1, DATA_2, DATA_3, DATA_4, DATA_5, DATA_6, DATA_7, DATA_8, DATA_9, DATA_10, DATA_11, DATA_12, DATA_13, DATA_14, DATA_15, DATA_16, DATA_17, DATA_18, DATA_19, DATA_20, DATA_21, DATA_22, DATA_23};
         writeTTyDevice(fid, data);
         L.e(TAG, "sendByte  " + Arrays.toString(data));
     }
@@ -1052,7 +1048,7 @@ public class VoiceService extends AccessibilityService {
                 }
             }
 
-            MODE = sendData[2];
+            byte MODE = sendData[2];
             L.e("TTTTTTTTTTTTTTTTTTTTTT MODE = ", MODE + "    " + sendData[4]);
 
             if ((sendData[4] & 0x01) != 0) {

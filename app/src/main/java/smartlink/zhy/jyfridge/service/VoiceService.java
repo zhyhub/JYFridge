@@ -338,10 +338,6 @@ public class VoiceService extends AccessibilityService {
                     mIat.stopListening();
                 }
 
-                mSignwayManager.openGpioDevice();
-                mSignwayManager.setGpioNum(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN23, SignwayManager.GPIOGroup.GPIO4, SignwayManager.GPIONum.PA0);
-                mSignwayManager.setHighGpio(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN23);
-
                 //接受到f1信号，设备已经被唤醒，调用讯飞语音识别
                 L.e(TAG, "接受到f1信号，设备已经被唤醒，调用讯飞语音识别");
 
@@ -350,6 +346,9 @@ public class VoiceService extends AccessibilityService {
                     isPause = true;
                     L.e(TAG, "onKeyEvent  播放睡前故事暂停");
                 }
+
+                initSignWay23(true);
+
                 int code = mTts.startSpeaking("我在", mTtsListener);
                 /*
                  * 只保存音频不进行播放接口,调用此接口请注释startSpeaking接口
@@ -383,6 +382,16 @@ public class VoiceService extends AccessibilityService {
         L.e(TAG, str);
     }
 
+    private void initSignWay23(boolean isOpen) {
+        mSignwayManager = SignwayManager.getInstatnce();
+        mSignwayManager.setGpioNum(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN23, SignwayManager.GPIOGroup.GPIO0, SignwayManager.GPIONum.PD4);
+        if (isOpen) {
+            mSignwayManager.setHighGpio(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN23);
+        } else {
+            mSignwayManager.setLowGpio(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN23);
+        }
+    }
+
     /**
      * 讯飞听写监听器。
      */
@@ -400,7 +409,7 @@ public class VoiceService extends AccessibilityService {
             // 错误码：10118(您没有说话)，可能是录音机权限被禁，需要提示用户打开应用的录音权限。
             // 如果使用本地功能（语记）需要提示用户开启语记的录音权限。
             showTip(error.getPlainDescription(true));
-            mSignwayManager.setLowGpio(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN23);
+            initSignWay23(false);
             if (isPause) {
                 MusicPlayer.getPlayer().resume();
                 isPause = false;
@@ -436,6 +445,8 @@ public class VoiceService extends AccessibilityService {
 //                }
                 if (!msg.equals("")) {
                     sendMsg(msg, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC), audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
+                } else {
+                    initSignWay23(false);
                 }
 //                else if(msg.equals("关闭灯。")){
 //                    DATA_2 = ConstantPool.Data2_Modify_Mode;

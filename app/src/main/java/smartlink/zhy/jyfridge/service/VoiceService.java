@@ -339,6 +339,7 @@ public class VoiceService extends AccessibilityService {
                 }
 
                 mSignwayManager.openGpioDevice();
+                mSignwayManager.setGpioNum(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN23, SignwayManager.GPIOGroup.GPIO4, SignwayManager.GPIONum.PA0);
                 mSignwayManager.setHighGpio(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN23);
 
                 //接受到f1信号，设备已经被唤醒，调用讯飞语音识别

@@ -238,6 +238,7 @@ public class VoiceService extends AccessibilityService {
         @Override
         public void onSpeakBegin() {
             showTip("开始播放");
+            initSignWay23(true);
         }
 
         @Override
@@ -347,7 +348,7 @@ public class VoiceService extends AccessibilityService {
                     L.e(TAG, "onKeyEvent  播放睡前故事暂停");
                 }
 
-                initSignWay23(true);
+//                initSignWay23(true);
 
                 int code = mTts.startSpeaking("我在", mTtsListener);
                 /*
@@ -409,7 +410,7 @@ public class VoiceService extends AccessibilityService {
             // 错误码：10118(您没有说话)，可能是录音机权限被禁，需要提示用户打开应用的录音权限。
             // 如果使用本地功能（语记）需要提示用户开启语记的录音权限。
             showTip(error.getPlainDescription(true));
-            initSignWay23(false);
+//            initSignWay23(false);
             if (isPause) {
                 MusicPlayer.getPlayer().resume();
                 isPause = false;
@@ -421,12 +422,13 @@ public class VoiceService extends AccessibilityService {
         public void onEndOfSpeech() {
             // 此回调表示：检测到了语音的尾端点，已经进入识别过程，不再接受语音输入
             showTip("结束说话");
-            mSignwayManager.setLowGpio(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN23);
+//            mSignwayManager.setLowGpio(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN23);
             if (isPause) {
                 MusicPlayer.getPlayer().resume();
                 isPause = false;
                 L.e(TAG, "onCompleted  播放睡前故事恢复播放");
             }
+            initSignWay23(false);
         }
 
         @Override
@@ -445,8 +447,6 @@ public class VoiceService extends AccessibilityService {
 //                }
                 if (!msg.equals("")) {
                     sendMsg(msg, audioManager.getStreamVolume(AudioManager.STREAM_MUSIC), audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
-                } else {
-                    initSignWay23(false);
                 }
 //                else if(msg.equals("关闭灯。")){
 //                    DATA_2 = ConstantPool.Data2_Modify_Mode;
@@ -546,7 +546,7 @@ public class VoiceService extends AccessibilityService {
         // 设置语音前端点:静音超时时间，即用户多长时间不说话则当做超时处理
         mIat.setParameter(SpeechConstant.VAD_BOS, "10000");
         // 设置语音后端点:后端点静音检测时间，即用户停止说话多长时间内即认为不再输入， 自动停止录音
-        mIat.setParameter(SpeechConstant.VAD_EOS, "10000");
+        mIat.setParameter(SpeechConstant.VAD_EOS, "1000");
         // 设置标点符号,设置为"0"返回结果无标点,设置为"1"返回结果有标点
         mIat.setParameter(SpeechConstant.ASR_PTT, "1");
         // 设置音频保存路径，保存音频格式支持pcm、wav，设置路径为sd卡请注意WRITE_EXTERNAL_STORAGE权限

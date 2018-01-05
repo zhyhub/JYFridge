@@ -22,6 +22,7 @@ public class ConstantPool {
 
     public static final String AI = BASE_URL + "in/general!ai";
     public static final String NearOverdue = BASE_URL + "in/ingredients!nearOverdue";
+    public static final String Recommend = BASE_URL + "in/ingredients!recommend";
     //    public static final String UpLoadInfo = "http://192.168.100.173:8080/imgTest/in/img!uploadInfo";
 //    public static final String UpLoadInfo = "http://192.168.199.182:8080/imgTest/in/img!uploadInfo";
     public static final String UpLoadInfo = BASE_URL + "in/img!uploadInfo";

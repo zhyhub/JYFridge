@@ -590,7 +590,8 @@ public class VoiceService extends AccessibilityService {
                         if (mIat.isListening()) {
                             mIat.stopListening();
                         }
-                        mTts.startSpeaking("冰箱里的" + entity.getText() + "快过期了，请尽快食用", mTtsListener);
+                        mTts.startSpeaking("冰箱里的" + entity.getText() + "快过期了，请尽快食用", null);
+                        Recommend();
                     }
                 }
             }
@@ -603,6 +604,40 @@ public class VoiceService extends AccessibilityService {
             @Override
             public void onFailure(Call call, IOException e) {
                 L.e(TAG, "NearOverDue  onFailure");
+            }
+        });
+    }
+
+    private void Recommend() {
+        BaseOkHttpClient.newBuilder()
+                .addParam("Ingredients.refrigeratorId", ConstantPool.FridgeId)
+                .get().url(ConstantPool.Recommend)
+                .build().enqueue(new BaseCallBack() {
+            @Override
+            public void onSuccess(Object o) {
+                Gson gson = new Gson();
+                BaseEntity entity = gson.fromJson(o.toString(), BaseEntity.class);
+                if (entity != null && entity.getCode() == 1) {
+                    if (entity.getText() != null && !"".equals(entity.getText())) {
+                        if (mTts.isSpeaking()) {
+                            mTts.stopSpeaking();
+                        }
+                        if (mIat.isListening()) {
+                            mIat.stopListening();
+                        }
+                        mTts.startSpeaking(entity.getText(), mTtsListener);
+                    }
+                }
+            }
+
+            @Override
+            public void onError(int code) {
+                L.e(TAG, "Recommend  onError");
+            }
+
+            @Override
+            public void onFailure(Call call, IOException e) {
+                L.e(TAG, "Recommend  onFailure");
             }
         });
     }

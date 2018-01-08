@@ -584,12 +584,12 @@ public class VoiceService extends AccessibilityService {
                 BaseEntity entity = gson.fromJson(o.toString(), BaseEntity.class);
                 if (entity != null && entity.getCode() == 1) {
                     if (entity.getText() != null && !"".equals(entity.getText())) {
-                        if (mTts.isSpeaking()) {
-                            mTts.stopSpeaking();
-                        }
-                        if (mIat.isListening()) {
-                            mIat.stopListening();
-                        }
+//                        if (mTts.isSpeaking()) {
+//                            mTts.stopSpeaking();
+//                        }
+//                        if (mIat.isListening()) {
+//                            mIat.stopListening();
+//                        }
                         mTts.startSpeaking("冰箱里的" + entity.getText() + "快过期了，请尽快食用", null);
                         Recommend();
                     }
@@ -619,12 +619,12 @@ public class VoiceService extends AccessibilityService {
                 BaseEntity entity = gson.fromJson(o.toString(), BaseEntity.class);
                 if (entity != null && entity.getCode() == 1) {
                     if (entity.getText() != null && !"".equals(entity.getText())) {
-                        if (mTts.isSpeaking()) {
-                            mTts.stopSpeaking();
-                        }
-                        if (mIat.isListening()) {
-                            mIat.stopListening();
-                        }
+//                        if (mTts.isSpeaking()) {
+//                            mTts.stopSpeaking();
+//                        }
+//                        if (mIat.isListening()) {
+//                            mIat.stopListening();
+//                        }
                         mTts.startSpeaking(entity.getText(), mTtsListener);
                     }
                 }
@@ -1345,6 +1345,18 @@ public class VoiceService extends AccessibilityService {
 
 //=============================================================  下面是控制图像识别逻辑 ======================================================================================================
 
+    private Handler DoorHandler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what){
+                case 100:
+                    String text = (String) msg.obj;
+                    mTts.startSpeaking(text, mTtsListener);
+                    break;
+            }
+        }
+    };
+
     private void OpenDoor() {
         BaseOkHttpClient.newBuilder()
                 .get()
@@ -1416,10 +1428,12 @@ public class VoiceService extends AccessibilityService {
                 BaseEntity entity = gson.fromJson(o.toString(), BaseEntity.class);
                 if (entity.getCode() == 1) {
                     if (entity.getText() != null && !"".equals(entity.getText())) {
-                        if (mIat.isListening()) {
-                            mIat.stopListening();
-                        }
-                        mTts.startSpeaking(entity.getText(), mTtsListener);
+//                        if (mIat.isListening()) {
+//                            mIat.stopListening();
+//                        }
+                        Message msg = new Message();
+                        msg.obj = entity.getText();
+                        DoorHandler.sendMessage(msg);
                     }
                 }
             }

@@ -1,67 +1,71 @@
 package smartlink.zhy.jyfridge.service;
 
-        import android.accessibilityservice.AccessibilityService;
-        import android.app.AlarmManager;
-        import android.app.PendingIntent;
-        import android.content.BroadcastReceiver;
-        import android.content.Context;
-        import android.content.Intent;
-        import android.content.IntentFilter;
-        import android.media.AudioManager;
-        import android.net.ConnectivityManager;
-        import android.net.NetworkInfo;
-        import android.os.Bundle;
-        import android.os.Environment;
-        import android.os.Handler;
-        import android.os.Looper;
-        import android.os.Message;
-        import android.util.Log;
-        import android.view.KeyEvent;
-        import android.view.accessibility.AccessibilityEvent;
+import android.accessibilityservice.AccessibilityService;
+import android.annotation.SuppressLint;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.media.AudioManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.accessibility.AccessibilityEvent;
 
-        import com.google.gson.Gson;
-        import com.iflytek.cloud.ErrorCode;
-        import com.iflytek.cloud.InitListener;
-        import com.iflytek.cloud.RecognizerListener;
-        import com.iflytek.cloud.RecognizerResult;
-        import com.iflytek.cloud.SpeechConstant;
-        import com.iflytek.cloud.SpeechError;
-        import com.iflytek.cloud.SpeechRecognizer;
-        import com.iflytek.cloud.SpeechSynthesizer;
-        import com.iflytek.cloud.SynthesizerListener;
-        import com.signway.SignwayManager;
+import com.google.gson.Gson;
+import com.iflytek.cloud.ErrorCode;
+import com.iflytek.cloud.InitListener;
+import com.iflytek.cloud.RecognizerListener;
+import com.iflytek.cloud.RecognizerResult;
+import com.iflytek.cloud.SpeechConstant;
+import com.iflytek.cloud.SpeechError;
+import com.iflytek.cloud.SpeechRecognizer;
+import com.iflytek.cloud.SpeechSynthesizer;
+import com.iflytek.cloud.SynthesizerListener;
+import com.signway.SignwayManager;
 
-        import org.greenrobot.eventbus.EventBus;
-        import org.json.JSONException;
-        import org.json.JSONObject;
-        import org.litepal.crud.DataSupport;
+import org.greenrobot.eventbus.EventBus;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.litepal.crud.DataSupport;
 
-        import java.io.BufferedReader;
-        import java.io.IOException;
-        import java.io.InputStream;
-        import java.io.InputStreamReader;
-        import java.io.OutputStream;
-        import java.net.Socket;
-        import java.util.ArrayList;
-        import java.util.Arrays;
-        import java.util.HashMap;
-        import java.util.LinkedHashMap;
-        import java.util.List;
-        import java.util.concurrent.ExecutorService;
-        import java.util.concurrent.Executors;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-        import okhttp3.Call;
-        import smartlink.zhy.jyfridge.ConstantPool;
-        import smartlink.zhy.jyfridge.R;
-        import smartlink.zhy.jyfridge.bean.BaseEntity;
-        import smartlink.zhy.jyfridge.bean.RemindBean;
-        import smartlink.zhy.jyfridge.bean.Song;
-        import smartlink.zhy.jyfridge.bean.ZigbeeBean;
-        import smartlink.zhy.jyfridge.json.JsonParser;
-        import smartlink.zhy.jyfridge.player.MusicPlayer;
-        import smartlink.zhy.jyfridge.utils.BaseCallBack;
-        import smartlink.zhy.jyfridge.utils.BaseOkHttpClient;
-        import smartlink.zhy.jyfridge.utils.L;
+import okhttp3.Call;
+import smartlink.zhy.jyfridge.ConstantPool;
+import smartlink.zhy.jyfridge.R;
+import smartlink.zhy.jyfridge.bean.BaseEntity;
+import smartlink.zhy.jyfridge.bean.RemindBean;
+import smartlink.zhy.jyfridge.bean.Song;
+import smartlink.zhy.jyfridge.bean.ZigbeeBean;
+import smartlink.zhy.jyfridge.json.JsonParser;
+import smartlink.zhy.jyfridge.player.MusicPlayer;
+import smartlink.zhy.jyfridge.utils.BaseCallBack;
+import smartlink.zhy.jyfridge.utils.BaseOkHttpClient;
+import smartlink.zhy.jyfridge.utils.L;
 
 /**
  * 唤醒android板   调用讯飞语音
@@ -1327,7 +1331,12 @@ public class VoiceService extends AccessibilityService {
 
 //=============================================================  下面是控制图像识别逻辑 ======================================================================================================
 
+    private LinkedHashMap<String, Boolean> maps;
+
     private void OpenDoor() {
+
+        maps = new LinkedHashMap<>();
+
         BaseOkHttpClient.newBuilder()
                 .get()
                 .url(ConstantPool.OPEN)
@@ -1340,7 +1349,7 @@ public class VoiceService extends AccessibilityService {
                     @Override
                     public void run() {
                         getResult();
-                        resultHandler.postDelayed(resultUpdate, 1000); //1秒后再调用
+                        resultHandler.postDelayed(resultUpdate, 500); //1秒后再调用
                     }
                 };
                 resultHandler.post(resultUpdate);
@@ -1366,7 +1375,13 @@ public class VoiceService extends AccessibilityService {
                 .build().enqueue(new BaseCallBack() {
             @Override
             public void onSuccess(Object o) {
-                L.e(TAG, "close  onSuccess" + o.toString());
+                Gson gson = new Gson();
+                BaseEntity entity = gson.fromJson(o.toString(), BaseEntity.class);
+                if (entity.getCode() == 1 && entity.getText() != null && !"".equals(entity.getText())) {
+                    L.e(TAG, "close  onSuccess" + entity.getText());
+                    maps.clear();
+                    mTts.startSpeaking(entity.getText(), mTtsListener);
+                }
             }
 
             @Override
@@ -1398,7 +1413,20 @@ public class VoiceService extends AccessibilityService {
                 BaseEntity entity = gson.fromJson(o.toString(), BaseEntity.class);
                 if (entity.getCode() == 1 && entity.getText() != null && !"".equals(entity.getText())) {
                     L.e(TAG, "getResult  getCode" + entity.getText());
-                    mTts.startSpeaking(entity.getText(), mTtsListener);
+
+                    if (!entity.getText().contains(",")) {
+                        maps.put(entity.getText(), false);
+                    }
+                    if (!mTts.isSpeaking()) {
+                        for (Map.Entry<String, Boolean> entry : maps.entrySet()) {
+                            L.e("key= " + entry.getKey() + " and value= " + entry.getValue());
+                            if (!entry.getValue()) {
+                                mTts.startSpeaking(entry.getKey(), mTtsListener);
+                                entry.setValue(true);
+                                return;
+                            }
+                        }
+                    }
                 }
             }
 

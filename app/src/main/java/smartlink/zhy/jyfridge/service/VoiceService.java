@@ -281,6 +281,11 @@ public class VoiceService extends AccessibilityService {
                 showTip("播放完成");
                 mIatResults.clear();
 
+                if(isNearOverDue){
+                    Recommend();
+                    isNearOverDue = false;
+                }
+
                 // 设置参数
                 setParam();
                 ret = mIat.startListening(mRecognizerListener);
@@ -328,6 +333,8 @@ public class VoiceService extends AccessibilityService {
     private int mPercentForBuffering = 0;
     // 播放进度
     private int mPercentForPlaying = 0;
+
+    private boolean isNearOverDue = false;
 
     /**
      * 讯飞唤醒监听
@@ -590,14 +597,15 @@ public class VoiceService extends AccessibilityService {
                 BaseEntity entity = gson.fromJson(o.toString(), BaseEntity.class);
                 if (entity != null && entity.getCode() == 1) {
                     if (entity.getText() != null && !"".equals(entity.getText())) {
-//                        if (mTts.isSpeaking()) {
-//                            mTts.stopSpeaking();
-//                        }
-//                        if (mIat.isListening()) {
-//                            mIat.stopListening();
-//                        }
-                        mTts.startSpeaking("冰箱里的" + entity.getText() + "快过期了，请尽快食用", null);
-                        Recommend();
+                        if (mTts.isSpeaking()) {
+                            mTts.stopSpeaking();
+                        }
+                        if (mIat.isListening()) {
+                            mIat.stopListening();
+                        }
+                        L.e(TAG, "NearOverDue  entity.getText() " + entity.getText());
+                        isNearOverDue = true;
+                        mTts.startSpeaking("冰箱里的" + entity.getText() + "快过期了，请尽快食用", mTtsListener);
                     }
                 }
             }
@@ -625,12 +633,12 @@ public class VoiceService extends AccessibilityService {
                 BaseEntity entity = gson.fromJson(o.toString(), BaseEntity.class);
                 if (entity != null && entity.getCode() == 1) {
                     if (entity.getText() != null && !"".equals(entity.getText())) {
-//                        if (mTts.isSpeaking()) {
-//                            mTts.stopSpeaking();
-//                        }
-//                        if (mIat.isListening()) {
-//                            mIat.stopListening();
-//                        }
+                        if (mTts.isSpeaking()) {
+                            mTts.stopSpeaking();
+                        }
+                        if (mIat.isListening()) {
+                            mIat.stopListening();
+                        }
                         mTts.startSpeaking(entity.getText(), mTtsListener);
                     }
                 }

@@ -22,6 +22,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TimePicker;
 
+import com.joyoungdevlibrary.interface_sdk.CallBack;
+import com.joyoungdevlibrary.interface_sdk.CommandCallBack;
+import com.joyoungdevlibrary.utils.JoyoungDevLinkSDK;
+
 import org.greenrobot.eventbus.EventBus;
 import org.litepal.crud.DataSupport;
 import org.litepal.tablemanager.Connector;
@@ -141,6 +145,35 @@ public class MainActivity extends AppCompatActivity{
         setContentView(R.layout.activity_main);
         startService(new Intent(this, PlayerService.class));
 
+        JoyoungDevLinkSDK.init(MainActivity.this, "12289", "01", new CommandCallBack() {
+            @Override
+            public void connectionLost(String msg) {
+                L.e("connectionLost", "----------------" + msg);
+            }
+
+            @Override
+            public void messageArrived(String msg) {
+                L.e("messageArrived init ", "----------------" + msg);
+            }
+
+            @Override
+            public void deliveryComplete(String token) {
+
+            }
+        }, new CallBack() {
+            @Override
+            public void onSuccess() {
+                L.e(" new CallBack() ", "----------------  + onSuccess");
+            }
+
+            @Override
+            public void onError() {
+                L.e(" new CallBack() ", "----------------  + onError");
+
+            }
+        });
+
+
 //        AppCompatButton button0 = findViewById(R.id.button_0);
 //        AppCompatButton button1 = findViewById(R.id.button_1);
 //        AppCompatButton button2 = findViewById(R.id.button_2);
@@ -171,12 +204,6 @@ public class MainActivity extends AppCompatActivity{
 //            }
 //        });
 
-    }
-
-    private Song getSong(String url) {
-        Song song = new Song();
-        song.setPath(url);
-        return song;
     }
 
     @Override

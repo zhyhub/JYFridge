@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/JYFridge.iml" filepath="$PROJECT_DIR$/JYFridge.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/joyoungdevlibrary/joyoungdevlibrary.iml" filepath="$PROJECT_DIR$/joyoungdevlibrary/joyoungdevlibrary.iml" />
     </modules>
   </component>
 </project>

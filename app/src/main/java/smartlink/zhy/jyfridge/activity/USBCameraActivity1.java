@@ -1,6 +1,5 @@
 package smartlink.zhy.jyfridge.activity;
 
-import android.content.Intent;
 import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
 import android.os.Handler;

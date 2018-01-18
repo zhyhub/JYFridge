@@ -2,7 +2,6 @@ package smartlink.zhy.jyfridge.service;
 
 import android.app.Service;
 import android.content.Intent;
-import android.media.MediaPlayer;
 import android.os.IBinder;
 
 import org.greenrobot.eventbus.EventBus;

@@ -1,60 +1,16 @@
 package smartlink.zhy.jyfridge.activity;
 
-import android.annotation.SuppressLint;
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.app.TimePickerDialog;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.database.sqlite.SQLiteDatabase;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.annotation.Nullable;
-import android.support.v4.math.MathUtils;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.AppCompatButton;
-import android.util.TimeUtils;
-import android.view.View;
-import android.widget.Button;
-import android.widget.TimePicker;
 
 import com.joyoungdevlibrary.interface_sdk.CallBack;
 import com.joyoungdevlibrary.interface_sdk.CommandCallBack;
 import com.joyoungdevlibrary.utils.JoyoungDevLinkSDK;
 
-import org.greenrobot.eventbus.EventBus;
-import org.litepal.crud.DataSupport;
-import org.litepal.tablemanager.Connector;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.Interceptor;
-import okhttp3.MediaType;
-import okhttp3.MultipartBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import smartlink.zhy.jyfridge.ConstantPool;
 import smartlink.zhy.jyfridge.R;
-import smartlink.zhy.jyfridge.bean.PlayEvent;
-import smartlink.zhy.jyfridge.bean.RemindBean;
-import smartlink.zhy.jyfridge.bean.Song;
 import smartlink.zhy.jyfridge.service.PlayerService;
-import smartlink.zhy.jyfridge.service.VoiceService;
 import smartlink.zhy.jyfridge.utils.L;
 
 /**

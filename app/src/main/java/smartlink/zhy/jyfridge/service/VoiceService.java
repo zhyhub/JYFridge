@@ -1102,6 +1102,24 @@ public class VoiceService extends AccessibilityService {
                 compareData = sendData;
             }
 
+            if ((sendData[4] & 0x01) != 0 && (sendData[4] & 0x02) != 0 && (sendData[4] & 0x04) != 0) {
+                L.e(TAG, "冷藏室门 变温门 冷冻门 开了");
+            } else if ((sendData[4] & 0x01) == 0 && (sendData[4] & 0x02) == 0 && (sendData[4] & 0x04) == 0) {
+                L.e(TAG, "冷藏室门 变温门 冷冻门 关了");
+            } else if ((sendData[4] & 0x01) != 0 && (sendData[4] & 0x02) != 0) {
+                L.e(TAG, "冷藏室门 变温门 开了");
+            } else if ((sendData[4] & 0x01) == 0 && (sendData[4] & 0x02) == 0) {
+                L.e(TAG, "冷藏室门 变温门 关了");
+            } else if ((sendData[4] & 0x01) != 0 && (sendData[4] & 0x04) != 0) {
+                L.e(TAG, "冷藏室门 冷冻门 开了");
+            } else if ((sendData[4] & 0x01) == 0 && (sendData[4] & 0x04) == 0) {
+                L.e(TAG, "冷藏室门 冷冻门 关了");
+            } else if ((sendData[4] & 0x02) != 0 && (sendData[4] & 0x04) != 0) {
+                L.e(TAG, "变温门 冷冻门 开了");
+            } else if ((sendData[4] & 0x02) == 0 && (sendData[4] & 0x04) == 0) {
+                L.e(TAG, "变温门 冷冻门 关了");
+            }
+
             if ((sendData[4] & 0x01) != 0) {
                 if (!isOpenDoor1) {
                     L.e(TAG, "冷藏室门   ------------开了");
@@ -1126,9 +1144,7 @@ public class VoiceService extends AccessibilityService {
                 } else {
                     L.e(TAG, "冷藏室门  关了");
                 }
-            }
-
-            if ((sendData[4] & 0x02) != 0) {
+            } else if ((sendData[4] & 0x02) != 0) {
                 if (!isOpenDoor8) {
                     L.e(TAG, "变温门   开了");
                     isOpenDoor8 = true;
@@ -1141,7 +1157,7 @@ public class VoiceService extends AccessibilityService {
                         OpenDoorEight = 0;
                     }
                 }
-            } else if((sendData[4] & 0x02) == 0){
+            } else if ((sendData[4] & 0x02) == 0) {
                 if (isOpenDoor8) {
                     L.e(TAG, "变温门   ------------关了");
                     CloseDoor();
@@ -1151,9 +1167,7 @@ public class VoiceService extends AccessibilityService {
                 } else {
                     L.e(TAG, "变温门  关了");
                 }
-            }
-
-            if ((sendData[4] & 0x04) != 0) {
+            } else if ((sendData[4] & 0x04) != 0) {
                 if (!isOpenDoor2) {
                     L.e(TAG, "冷冻门   开了");
                     isOpenDoor2 = true;
@@ -1166,7 +1180,7 @@ public class VoiceService extends AccessibilityService {
                         OpenDoorTwo = 0;
                     }
                 }
-            } else if((sendData[4] & 0x04) == 0){
+            } else if ((sendData[4] & 0x04) == 0) {
                 if (isOpenDoor2) {
                     L.e(TAG, "冷冻门   ------------关了");
                     CloseDoor();

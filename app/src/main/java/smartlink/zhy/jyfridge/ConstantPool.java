@@ -15,14 +15,14 @@ public class ConstantPool {
     public static final int Camera_3 = 3;
 
     public static final String BASE_RUYI = "http://api.ruyi.ai/";
-    //    private static final String BASE_URL = "http://192.168.100.173:8080/imgTest/";
-//    private static final String BASE_URL = "http://192.168.199.182:8080/imgTest/";
+//        private static final String BASE_URL = "http://192.168.199.188:8080/imgTest/";
     private static final String BASE_URL = "http://112.124.102.114:8090/imgTest/";
 //    public static final String APP_KEY = "a0927149-bfd5-40cc-824e-a110b0847c6e";
 
     public static final String AI = BASE_URL + "in/general!ai";
     public static final String NearOverdue = BASE_URL + "in/ingredients!nearOverdue";
     public static final String Recommend = BASE_URL + "in/ingredients!recommend";
+    public static final String FridgeInfo = BASE_URL + "in/refrigerator!addinfo";//上传冰箱信息
     //    public static final String UpLoadInfo = "http://192.168.100.173:8080/imgTest/in/img!uploadInfo";
 //    public static final String UpLoadInfo = "http://192.168.199.182:8080/imgTest/in/img!uploadInfo";
     public static final String UpLoadInfo = BASE_URL + "in/img!uploadInfo";

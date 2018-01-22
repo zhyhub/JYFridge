@@ -276,7 +276,7 @@ public class VoiceService extends AccessibilityService {
                 showTip("播放完成");
                 mIatResults.clear();
 
-                if(isNearOverDue){
+                if (isNearOverDue) {
                     Recommend();
                     isNearOverDue = false;
                 }
@@ -673,6 +673,7 @@ public class VoiceService extends AccessibilityService {
                 .build().enqueue(new BaseCallBack() {
             @Override
             public void onSuccess(Object o) {
+                isNew = true;
                 L.e(TAG, "onSuccess" + o.toString());
                 if (mIat.isListening()) {
                     mIat.stopListening();
@@ -1020,6 +1021,18 @@ public class VoiceService extends AccessibilityService {
 
     private boolean isSet = false;
 
+    private boolean isNew = false;
+    private byte[] compareData = new byte[48];
+    private int OpenDoorOne = 0;
+    private int OpenDoorTwo = 0;
+    private int OpenDoorEight = 0;
+
+    private boolean One = false;
+    private boolean Two = false;
+    private boolean Eight = false;
+
+    private boolean isCompared = false;
+
     /**
      * 读串口数据
      */
@@ -1085,8 +1098,9 @@ public class VoiceService extends AccessibilityService {
                 }
             }
 
-            byte MODE = sendData[2];
-            L.e("TTTTTTTTTTTTTTTTTTTTTT MODE = ", MODE + "    " + sendData[4]);
+            if (!isNew) {
+                compareData = sendData;
+            }
 
             if ((sendData[4] & 0x01) != 0) {
                 if (!isOpenDoor1) {
@@ -1095,12 +1109,20 @@ public class VoiceService extends AccessibilityService {
                     isOpenDoor1 = true;
                 } else {
                     L.e(TAG, "冷藏室门  开了");
+                    OpenDoorOne++;
+                    L.e(TAG, "OpenDoorOne  " + OpenDoorOne);
+                    if (OpenDoorOne >= 30 && !One) {
+                        updateFridgeInfo(2);
+                        OpenDoorOne = 0;
+                    }
                 }
             } else if ((sendData[4] & 0x01) == 0) {
                 if (isOpenDoor1) {
                     L.e(TAG, "冷藏室门   ------------关了");
                     CloseDoor();
                     isOpenDoor1 = false;
+                    One = false;
+                    isCompared = false;
                 } else {
                     L.e(TAG, "冷藏室门  关了");
                 }
@@ -1112,10 +1134,23 @@ public class VoiceService extends AccessibilityService {
                     isOpenDoor8 = true;
                 } else {
                     L.e(TAG, "变温门   ---------------开了");
+                    OpenDoorEight++;
+                    L.e(TAG, "OpenDoorEight  " + OpenDoorEight);
+                    if (OpenDoorEight >= 30 && !Eight) {
+                        updateFridgeInfo(3);
+                        OpenDoorEight = 0;
+                    }
                 }
-            } else {
-                L.e(TAG, "变温门   ================关了");
-                isOpenDoor8 = false;
+            } else if((sendData[4] & 0x02) == 0){
+                if (isOpenDoor8) {
+                    L.e(TAG, "变温门   ------------关了");
+                    CloseDoor();
+                    isOpenDoor8 = false;
+                    Eight = false;
+                    isCompared = false;
+                } else {
+                    L.e(TAG, "变温门  关了");
+                }
             }
 
             if ((sendData[4] & 0x04) != 0) {
@@ -1124,14 +1159,80 @@ public class VoiceService extends AccessibilityService {
                     isOpenDoor2 = true;
                 } else {
                     L.e(TAG, "冷冻门   --------------开了");
+                    OpenDoorTwo++;
+                    L.e(TAG, "OpenDoorTwo  " + OpenDoorTwo);
+                    if (OpenDoorTwo >= 30 && !Two) {
+                        updateFridgeInfo(4);
+                        OpenDoorTwo = 0;
+                    }
                 }
+            } else if((sendData[4] & 0x04) == 0){
+                if (isOpenDoor2) {
+                    L.e(TAG, "冷冻门   ------------关了");
+                    CloseDoor();
+                    isOpenDoor2 = false;
+                    Two = false;
+                    isCompared = false;
+                } else {
+                    L.e(TAG, "冷冻门  关了");
+                }
+            }
+            compareByte(sendData, compareData);
+        }
+    }
+
+    private void compareByte(byte[] newData, byte[] compareData) {
+        if (!isCompared) {
+            if (Arrays.equals(newData, compareData)) {
+                L.e(TAG, "compareByte  无变化");
+                updateFridgeInfo(1);
+                isCompared = true;
             } else {
-                L.e(TAG, "冷冻门   ================关了");
-                isOpenDoor2 = false;
+                L.e(TAG, "compareByte  有变化");
+//            updateFridgeInfo(0);
+                isCompared = false;
+            }
+        }
+    }
+
+    /**
+     * 冰箱门异常
+     *
+     * @param code 0异常 ,1正常 ,2冷藏门 ,3变温门 ,4冷冻门 ,5冷藏变温 ,6冷藏冷冻 ,7变温冷冻 ,8冷藏变温冷冻
+     */
+    private void updateFridgeInfo(final int code) {
+        BaseOkHttpClient.newBuilder()
+                .addParam("refrigerator.refrigeratorid", ConstantPool.FridgeId)
+                .addParam("refrigerator.data", sendData)
+                .addParam("refrigerator.abnormity", code)
+                .get()
+                .url(ConstantPool.FridgeInfo)
+                .build().enqueue(new BaseCallBack() {
+            @Override
+            public void onSuccess(Object o) {
+                L.e(TAG, "updateFridgeInfo  onSuccess");
+                if (code == 2) {
+                    One = true;
+                    OpenDoorOne = 0;
+                } else if (code == 3) {
+                    Eight = true;
+                    OpenDoorEight = 0;
+                } else if (code == 4) {
+                    Two = true;
+                    OpenDoorTwo = 0;
+                }
             }
 
+            @Override
+            public void onError(int code) {
+                L.e(TAG, "updateFridgeInfo  onError");
+            }
 
-        }
+            @Override
+            public void onFailure(Call call, IOException e) {
+                L.e(TAG, "updateFridgeInfo  onFailure");
+            }
+        });
     }
 
 //=============================================================  下面是日程提醒调用逻辑  ======================================================================================================

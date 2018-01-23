@@ -22,34 +22,6 @@ public class MainActivity extends AppCompatActivity{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         startService(new Intent(this, PlayerService.class));
-
-        JoyoungDevLinkSDK.init(MainActivity.this, "18432", "01", new CommandCallBack() {
-            @Override
-            public void connectionLost(String msg) {
-                L.e("JoyoungDevLinkSDK connectionLost", "----------------" + msg);
-            }
-
-            @Override
-            public void messageArrived(String msg) {
-                L.e("JoyoungDevLinkSDK messageArrived init ", "----------------" + msg);
-            }
-
-            @Override
-            public void deliveryComplete(String token) {
-                L.e("JoyoungDevLinkSDK token ", "----------------" + token);
-            }
-        }, new CallBack() {
-            @Override
-            public void onSuccess() {
-                L.e("JoyoungDevLinkSDK new CallBack() ", "----------------  + onSuccess");
-            }
-
-            @Override
-            public void onError() {
-                L.e("JoyoungDevLinkSDK new CallBack() ", "----------------  + onError");
-
-            }
-        });
     }
 
     @Override

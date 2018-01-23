@@ -28,6 +28,9 @@ import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechRecognizer;
 import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SynthesizerListener;
+import com.joyoungdevlibrary.interface_sdk.CallBack;
+import com.joyoungdevlibrary.interface_sdk.CommandCallBack;
+import com.joyoungdevlibrary.utils.JoyoungDevLinkSDK;
 import com.signway.SignwayManager;
 
 import org.json.JSONException;
@@ -52,6 +55,7 @@ import java.util.concurrent.Executors;
 import okhttp3.Call;
 import smartlink.zhy.jyfridge.ConstantPool;
 import smartlink.zhy.jyfridge.R;
+import smartlink.zhy.jyfridge.activity.MainActivity;
 import smartlink.zhy.jyfridge.bean.BaseEntity;
 import smartlink.zhy.jyfridge.bean.RemindBean;
 import smartlink.zhy.jyfridge.bean.Song;
@@ -173,9 +177,40 @@ public class VoiceService extends AccessibilityService {
 
     private boolean isPause = false;
 
+    private void connectMQTT(){
+        JoyoungDevLinkSDK.init(VoiceService.this, "18432", "01", new CommandCallBack() {
+            @Override
+            public void connectionLost(String msg) {
+                L.e("JoyoungDevLinkSDK connectionLost", "----------------" + msg);
+            }
+
+            @Override
+            public void messageArrived(String msg) {
+                L.e("JoyoungDevLinkSDK messageArrived init ", "----------------" + msg);
+            }
+
+            @Override
+            public void deliveryComplete(String token) {
+                L.e("JoyoungDevLinkSDK token ", "----------------" + token);
+            }
+        }, new CallBack() {
+            @Override
+            public void onSuccess() {
+                L.e("JoyoungDevLinkSDK new CallBack() ", "----------------  + onSuccess");
+            }
+
+            @Override
+            public void onError() {
+                L.e("JoyoungDevLinkSDK new CallBack() ", "----------------  + onError");
+
+            }
+        });
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
+        connectMQTT();
         createSocket();
         am = (AlarmManager) VoiceService.this.getSystemService(Context.ALARM_SERVICE);
         alarmReceiver = new AlarmReceiver();

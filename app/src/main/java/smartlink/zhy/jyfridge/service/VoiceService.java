@@ -1252,7 +1252,7 @@ public class VoiceService extends AccessibilityService {
     private void updateFridgeInfo(final int code) {
         BaseOkHttpClient.newBuilder()
                 .addParam("refrigerator.refrigeratorid", ConstantPool.FridgeId)
-                .addParam("refrigerator.data", sendData)
+                .addParam("refrigerator.data", Arrays.toString(sendData))
                 .addParam("refrigerator.abnormity", code)
                 .get()
                 .url(ConstantPool.FridgeInfo)

@@ -55,7 +55,6 @@ import java.util.concurrent.Executors;
 import okhttp3.Call;
 import smartlink.zhy.jyfridge.ConstantPool;
 import smartlink.zhy.jyfridge.R;
-import smartlink.zhy.jyfridge.activity.MainActivity;
 import smartlink.zhy.jyfridge.bean.BaseEntity;
 import smartlink.zhy.jyfridge.bean.RemindBean;
 import smartlink.zhy.jyfridge.bean.Song;
@@ -65,6 +64,7 @@ import smartlink.zhy.jyfridge.player.MusicPlayer;
 import smartlink.zhy.jyfridge.utils.BaseCallBack;
 import smartlink.zhy.jyfridge.utils.BaseOkHttpClient;
 import smartlink.zhy.jyfridge.utils.L;
+import smartlink.zhy.jyfridge.utils.TypeConversion;
 
 /**
  * 唤醒android板   调用讯飞语音
@@ -177,7 +177,7 @@ public class VoiceService extends AccessibilityService {
 
     private boolean isPause = false;
 
-    private void connectMQTT(){
+    private void connectMQTT() {
         JoyoungDevLinkSDK.init(VoiceService.this, "18432", "01", new CommandCallBack() {
             @Override
             public void connectionLost(String msg) {
@@ -187,6 +187,8 @@ public class VoiceService extends AccessibilityService {
             @Override
             public void messageArrived(String msg) {
                 L.e("JoyoungDevLinkSDK messageArrived init ", "----------------" + msg);
+                writeTTyDevice(fid, TypeConversion.hexString2Bytes(msg.substring(10)));
+                L.e("JoyoungDevLinkSDK messageArrived data ", "----------------" + Arrays.toString(TypeConversion.hexString2Bytes(msg.substring(10))));
             }
 
             @Override
@@ -210,7 +212,6 @@ public class VoiceService extends AccessibilityService {
     @Override
     public void onCreate() {
         super.onCreate();
-        connectMQTT();
         createSocket();
         am = (AlarmManager) VoiceService.this.getSystemService(Context.ALARM_SERVICE);
         alarmReceiver = new AlarmReceiver();
@@ -252,6 +253,9 @@ public class VoiceService extends AccessibilityService {
         filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         registerReceiver(receiver, filter);
         L.e(TAG, "VoiceService VoiceService VoiceService VoiceService");
+
+        //连接MQTT服务器
+        connectMQTT();
     }
 
     /**

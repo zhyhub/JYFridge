@@ -303,20 +303,21 @@ public class JoyounglinkDevServers extends Service {
                     } else {
                         String data = jsonObject.optString("data");
                         Log.e("messageArrived1",data);
-                        ArrayList<String> cmdArray = DataUtils.bytesToHexStringArray2(data);
-                        String valueint_String = cmdArray.get(10) + cmdArray.get(11);
-                        switch (valueint_String) {
-                            case "ff0a":
-                                break;
-                            case "ff06":
-                                break;
-                            default:
-                                String cmd = data.substring(14, data.length());
-                                String title = getTitle(valueint_String);
-                                String newData = title + cmd;
-                                mCommandCallBack.messageArrived(newData);
-                                break;
-                        }
+                        mCommandCallBack.messageArrived(data); //现在不需要FAFB格式 先注释掉
+//                        ArrayList<String> cmdArray = DataUtils.bytesToHexStringArray2(data);
+//                        String valueint_String = cmdArray.get(10) + cmdArray.get(11);
+//                        switch (valueint_String) {
+//                            case "ff0a":
+//                                break;
+//                            case "ff06":
+//                                break;
+//                            default:
+//                                String cmd = data.substring(14, data.length());
+//                                String title = getTitle(valueint_String);
+//                                String newData = title + cmd;
+//                                mCommandCallBack.messageArrived(newData);
+//                                break;
+//                        }
                     }
                 } catch (Throwable throwable) {
                     String str = throwable.getMessage();

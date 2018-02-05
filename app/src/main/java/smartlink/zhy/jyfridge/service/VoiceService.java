@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
@@ -29,6 +30,7 @@ import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechRecognizer;
 import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SynthesizerListener;
+import com.joyoungdevlibrary.info.Data;
 import com.joyoungdevlibrary.interface_sdk.CallBack;
 import com.joyoungdevlibrary.interface_sdk.CommandCallBack;
 import com.joyoungdevlibrary.utils.JoyoungDevLinkSDK;
@@ -46,6 +48,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -75,6 +78,10 @@ public class VoiceService extends AccessibilityService {
 
     private static String TAG = VoiceService.class.getSimpleName();
 
+    //时间
+    boolean isFirst = false;
+    boolean isSecond = false;
+
     //行程提醒广播
     private AlarmReceiver alarmReceiver;
     private int requestCode = 0;
@@ -96,7 +103,6 @@ public class VoiceService extends AccessibilityService {
     /**
      * 串口接入
      */
-
     private boolean isOpenDoor1 = false;
     private boolean isOpenDoor2 = false;
     private boolean isOpenDoor8 = false;
@@ -594,6 +600,9 @@ public class VoiceService extends AccessibilityService {
                         }
                         L.e(TAG, "NearOverDue  entity.getText() " + entity.getText());
                         isNearOverDue = true;
+                        if (MusicPlayer.getPlayer().isPlaying()) {
+                            MusicPlayer.getPlayer().pause();
+                        }
                         mTts.startSpeaking("冰箱里的" + entity.getText() + "快过期了，请尽快食用", mTtsListener);
                     }
                 }
@@ -629,6 +638,7 @@ public class VoiceService extends AccessibilityService {
                             mIat.stopListening();
                         }
                         mTts.startSpeaking(entity.getText(), mTtsListener);
+                        MusicPlayer.getPlayer().resume();
                     }
                 }
             }
@@ -681,8 +691,8 @@ public class VoiceService extends AccessibilityService {
                             break;
                         case 1://冰箱操作
                             if (entity.getData() != null && entity.getData().length != 0) {
-                                writeTTyDevice(fid, entity.getData());
-                                TTS(entity);
+                                //模式、温度设置后，状态确认后方可语音播报
+                                DoConfirm(fid, entity);
                             }
                             break;
                         case 2://音量操作
@@ -945,6 +955,28 @@ public class VoiceService extends AccessibilityService {
         });
     }
 
+    /**
+     * 模式、温度设置后，状态确认后方可语音播报
+     */
+    private void DoConfirm(final int fid, final BaseEntity entity) {
+        writeTTyDevice(fid, entity.getData());
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                readTTyDevice();
+            }
+        }, 500);
+
+        if (sendData != null && sendData[2] == entity.getData()[9] && sendData[5] == entity.getData()[3] && sendData[6] == entity.getData()[4] && sendData[7] == entity.getData()[5]) {
+            TTS(entity);
+        }
+    }
+
+    /**
+     * 模式、温度设置后，状态确认后方可语音播报
+     */
+
     private void TTS(BaseEntity entity) {
         if (entity != null && entity.getText() != null && !entity.getText().equals("")) {
             mTts.startSpeaking(entity.getText(), mTtsListener);
@@ -992,16 +1024,32 @@ public class VoiceService extends AccessibilityService {
                         SignwayManager.GPIOGroup.GPIO0, SignwayManager.GPIONum.PD2);
                 int state = mSignwayManager.getGpioStatus(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN24);
                 L.e(TAG, "  state  : " + state);
-                if (state == 1 && !isRed) {
-                    NearOverDue();
-                    isRed = true;
-                } else if (state == 0) {
-                    isRed = false;
+                if (getCurrentTime()) {
+                    if (state == 1 && !isRed) {
+                        NearOverDue();
+                        isRed = true;
+                    } else if (state == 0) {
+                        isRed = false;
+                    }
                 }
                 redHandler.postDelayed(redUpdate, 500);
             }
         };
         redHandler.post(redUpdate);
+    }
+
+    /**
+     * 获取当前时间
+     */
+    private boolean getCurrentTime() {
+        Calendar calendar = Calendar.getInstance();
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        if (hour >= 6 && hour < 17) {
+            return true;
+        } else if (hour >= 17 && hour <= 22) {
+            return true;
+        }
+        return false;
     }
 
     private void sendByte() {
@@ -1138,11 +1186,14 @@ public class VoiceService extends AccessibilityService {
 
             if ((sendData[4] & 0x01) != 0) {
                 if (!isOpenDoor1) {
-                    L.e(TAG, "冷藏室门   ------------开了");
+                    L.e(TAG, "冷藏室门   开了");
+                    if (!mTts.isSpeaking() && !mIat.isListening()) {
+                        mTts.startSpeaking("我在", mTtsListener);
+                    }
                     OpenDoor();
                     isOpenDoor1 = true;
                 } else {
-                    L.e(TAG, "冷藏室门  开了");
+                    L.e(TAG, "冷藏室门  ------------开了");
                     OpenDoorOne++;
                     L.e(TAG, "OpenDoorOne  " + OpenDoorOne);
                     if (OpenDoorOne >= 30 && !One) {
@@ -1163,6 +1214,9 @@ public class VoiceService extends AccessibilityService {
             } else if ((sendData[4] & 0x02) != 0) {
                 if (!isOpenDoor8) {
                     L.e(TAG, "变温门   开了");
+                    if (!mTts.isSpeaking() && !mIat.isListening()) {
+                        mTts.startSpeaking("我在", mTtsListener);
+                    }
                     isOpenDoor8 = true;
                 } else {
                     L.e(TAG, "变温门   ---------------开了");
@@ -1186,6 +1240,9 @@ public class VoiceService extends AccessibilityService {
             } else if ((sendData[4] & 0x04) != 0) {
                 if (!isOpenDoor2) {
                     L.e(TAG, "冷冻门   开了");
+                    if (!mTts.isSpeaking() && !mIat.isListening()) {
+                        mTts.startSpeaking("我在", mTtsListener);
+                    }
                     isOpenDoor2 = true;
                 } else {
                     L.e(TAG, "冷冻门   --------------开了");

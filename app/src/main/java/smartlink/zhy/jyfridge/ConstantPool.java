@@ -9,11 +9,6 @@ public class ConstantPool {
     public static final int FridgeId = 1;
     public static final int UserID = 12345;
 
-    public static final int Camera_0 = 0;
-    public static final int Camera_1 = 1;
-    public static final int Camera_2 = 2;
-    public static final int Camera_3 = 3;
-
     public static final String BASE_RUYI = "http://api.ruyi.ai/";
 //        private static final String BASE_URL = "http://192.168.199.188:8080/imgTest/";
     private static final String BASE_URL = "http://112.124.102.114:8090/imgTest/";

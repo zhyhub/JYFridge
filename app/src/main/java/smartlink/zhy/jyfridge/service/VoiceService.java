@@ -1,6 +1,7 @@
 package smartlink.zhy.jyfridge.service;
 
 import android.accessibilityservice.AccessibilityService;
+import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -81,7 +82,7 @@ public class VoiceService extends AccessibilityService {
     // 语音听写对象
     private SpeechRecognizer mIat;
     // 用HashMap存储听写结果
-    private HashMap<String, String> mIatResults = new LinkedHashMap<String, String>();
+    private HashMap<String, String> mIatResults = new LinkedHashMap<>();
     // 引擎类型
     private String mEngineType = SpeechConstant.TYPE_CLOUD;
 
@@ -102,53 +103,7 @@ public class VoiceService extends AccessibilityService {
 
     private static int CurrentTemp = 0;
 
-    private byte DATA_0 = ConstantPool.Data0_beginning_commend;
-    private byte DATA_1 = ConstantPool.Data1_beginning_commend;
     private byte DATA_2 = ConstantPool.Zero;
-    private byte DATA_3 = ConstantPool.Zero;
-    private byte DATA_4 = ConstantPool.Zero;
-    private byte DATA_5 = ConstantPool.Zero;
-    private byte DATA_6 = ConstantPool.Default;
-    private byte DATA_7 = ConstantPool.Default;
-    private byte DATA_8 = ConstantPool.Default;
-    private byte DATA_9 = ConstantPool.Zero;
-    private byte DATA_10 = ConstantPool.Zero;
-    private byte DATA_11 = ConstantPool.Zero;
-    private byte DATA_12 = ConstantPool.Zero;
-    private byte DATA_13 = ConstantPool.Zero;
-    private byte DATA_14 = ConstantPool.Zero;
-    private byte DATA_15 = ConstantPool.Zero;
-    private byte DATA_16 = ConstantPool.Zero;
-    private byte DATA_17 = ConstantPool.Zero;
-    private byte DATA_18 = ConstantPool.Zero;
-    private byte DATA_19 = ConstantPool.Zero;
-    private byte DATA_20 = ConstantPool.Zero;
-    private byte DATA_21 = ConstantPool.Zero;
-    private byte DATA_22 = ConstantPool.Zero;
-    private byte DATA_23;
-    private byte DATA_24 = ConstantPool.Zero;
-    private byte DATA_25 = ConstantPool.Zero;
-    private byte DATA_26 = ConstantPool.Zero;
-    private byte DATA_27 = ConstantPool.Zero;
-    private byte DATA_28 = ConstantPool.Zero;
-    private byte DATA_29 = ConstantPool.Zero;
-    private byte DATA_30 = ConstantPool.Zero;
-    private byte DATA_31 = ConstantPool.Zero;
-    private byte DATA_32 = ConstantPool.Zero;
-    private byte DATA_33 = ConstantPool.Zero;
-    private byte DATA_34 = ConstantPool.Zero;
-    private byte DATA_35 = ConstantPool.Zero;
-    private byte DATA_36 = ConstantPool.Zero;
-    private byte DATA_37 = ConstantPool.Zero;
-    private byte DATA_38 = ConstantPool.Zero;
-    private byte DATA_39 = ConstantPool.Zero;
-    private byte DATA_40 = ConstantPool.Zero;
-    private byte DATA_41 = ConstantPool.Zero;
-    private byte DATA_42 = ConstantPool.Zero;
-    private byte DATA_43 = ConstantPool.Zero;
-    private byte DATA_44 = ConstantPool.Zero;
-    private byte DATA_45 = ConstantPool.Zero;
-    private byte DATA_46;
 
     private byte[] sendData = new byte[48];//读的数据
 
@@ -296,7 +251,7 @@ public class VoiceService extends AccessibilityService {
         public void onBufferProgress(int percent, int beginPos, int endPos,
                                      String info) {
             // 合成进度
-            mPercentForBuffering = percent;
+//            mPercentForBuffering = percent;
 //            showTip(String.format(getString(R.string.tts_toast_format),
 //                    mPercentForBuffering, mPercentForPlaying));
         }
@@ -304,7 +259,7 @@ public class VoiceService extends AccessibilityService {
         @Override
         public void onSpeakProgress(int percent, int beginPos, int endPos) {
             // 播放进度
-            mPercentForPlaying = percent;
+//            mPercentForPlaying = percent;
 //            showTip(String.format(getString(R.string.tts_toast_format),
 //                    mPercentForBuffering, mPercentForPlaying));
         }
@@ -364,9 +319,9 @@ public class VoiceService extends AccessibilityService {
 
     int ret = 0; // 函数调用返回值
     // 缓冲进度
-    private int mPercentForBuffering = 0;
+//    private int mPercentForBuffering = 0;
     // 播放进度
-    private int mPercentForPlaying = 0;
+//    private int mPercentForPlaying = 0;
 
     private boolean isNearOverDue = false;
 
@@ -374,7 +329,7 @@ public class VoiceService extends AccessibilityService {
      * 讯飞唤醒监听
      *
      * @param event 监听事件
-     * @return
+     * @return super.onKeyEvent(event);
      */
     @Override
     protected boolean onKeyEvent(KeyEvent event) {
@@ -532,7 +487,7 @@ public class VoiceService extends AccessibilityService {
             e.printStackTrace();
         }
         mIatResults.put(sn, text);
-        StringBuffer resultBuffer = new StringBuffer();
+        StringBuilder resultBuffer = new StringBuilder();
         for (String key : mIatResults.keySet()) {
             resultBuffer.append(mIatResults.get(key));
         }
@@ -1050,7 +1005,29 @@ public class VoiceService extends AccessibilityService {
     }
 
     private void sendByte() {
-        DATA_23 = (byte) (DATA_0 + DATA_1 + DATA_2 + DATA_3 + DATA_4 + DATA_5 + DATA_6
+        byte DATA_0 = ConstantPool.Data0_beginning_commend;
+        byte DATA_1 = ConstantPool.Data1_beginning_commend;
+        byte DATA_3 = ConstantPool.Zero;
+        byte DATA_4 = ConstantPool.Zero;
+        byte DATA_5 = ConstantPool.Zero;
+        byte DATA_6 = ConstantPool.Default;
+        byte DATA_7 = ConstantPool.Default;
+        byte DATA_8 = ConstantPool.Default;
+        byte DATA_9 = ConstantPool.Zero;
+        byte DATA_10 = ConstantPool.Zero;
+        byte DATA_11 = ConstantPool.Zero;
+        byte DATA_12 = ConstantPool.Zero;
+        byte DATA_13 = ConstantPool.Zero;
+        byte DATA_14 = ConstantPool.Zero;
+        byte DATA_15 = ConstantPool.Zero;
+        byte DATA_16 = ConstantPool.Zero;
+        byte DATA_17 = ConstantPool.Zero;
+        byte DATA_18 = ConstantPool.Zero;
+        byte DATA_19 = ConstantPool.Zero;
+        byte DATA_20 = ConstantPool.Zero;
+        byte DATA_21 = ConstantPool.Zero;
+        byte DATA_22 = ConstantPool.Zero;
+        byte DATA_23 = (byte) (DATA_0 + DATA_1 + DATA_2 + DATA_3 + DATA_4 + DATA_5 + DATA_6
                 + DATA_7 + DATA_8 + DATA_9 + DATA_10 + DATA_11 + DATA_12 + DATA_13 + DATA_14
                 + DATA_15 + DATA_16 + DATA_17 + DATA_18 + DATA_19 + DATA_20 + DATA_21 + DATA_22);
         byte[] data = new byte[]{DATA_0, DATA_1, DATA_2, DATA_3, DATA_4, DATA_5, DATA_6, DATA_7, DATA_8, DATA_9, DATA_10, DATA_11, DATA_12, DATA_13, DATA_14, DATA_15, DATA_16, DATA_17, DATA_18, DATA_19, DATA_20, DATA_21, DATA_22, DATA_23};
@@ -1082,9 +1059,9 @@ public class VoiceService extends AccessibilityService {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                while (isWrite) {
-                    continue;
-                }
+//                while (isWrite) {
+//                    continue;
+//                }
                 if (!isSet) {
                     isSet = true;
                     readLength = mSignwayManager.readUart(fid, rbuf, rbuf.length);
@@ -1327,8 +1304,9 @@ public class VoiceService extends AccessibilityService {
     private String response;
     private OutputStream outputStream;
     private static final int MSG_SOCKET = 1234;
-    private static final int MSG_DOOR = 111;
+//    private static final int MSG_DOOR = 111;
 
+    @SuppressLint("HandlerLeak")
     protected void createSocket() {
         L.e(TAG, "createSocket() called with: ip = [" + "192.168.100.1" + "], port = [" + 8888 + "]");
 
@@ -1422,9 +1400,9 @@ public class VoiceService extends AccessibilityService {
                     if (socket == null) {
                         socket = new Socket("192.168.100.1", 8888);
                     }
-                    OutputStream outputStream = socket.getOutputStream();
+                    outputStream = socket.getOutputStream();
                     byte buffer[] = content.getBytes();
-                    int temp = buffer.length;
+//                    int temp = buffer.length;
                     outputStream.write(buffer, 0, buffer.length);
                     outputStream.flush();
                 } catch (IOException | NullPointerException e) {

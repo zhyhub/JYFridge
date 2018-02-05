@@ -57,11 +57,6 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".activity.USBCameraActivity0"/>
-        <activity android:name=".activity.USBCameraActivity1"/>
-        <activity android:name=".activity.USBCameraActivity2"/>
-        <activity android:name=".activity.USBCameraActivity3"/>
-
         <meta-data
             android:name="IFLYTEK_APPKEY"
             android:value="'5a17be57'" />

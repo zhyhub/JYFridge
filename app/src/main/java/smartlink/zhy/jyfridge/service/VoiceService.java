@@ -15,7 +15,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
@@ -30,7 +29,6 @@ import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechRecognizer;
 import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SynthesizerListener;
-import com.joyoungdevlibrary.info.Data;
 import com.joyoungdevlibrary.interface_sdk.CallBack;
 import com.joyoungdevlibrary.interface_sdk.CommandCallBack;
 import com.joyoungdevlibrary.utils.JoyoungDevLinkSDK;
@@ -132,7 +130,7 @@ public class VoiceService extends AccessibilityService {
 
     int readLength;
     int fid = -1;
-    AlarmManager am;
+    AlarmManager alarmManager;
 
     private NetWorkStateReceiver receiver;
 
@@ -174,7 +172,7 @@ public class VoiceService extends AccessibilityService {
     public void onCreate() {
         super.onCreate();
         createSocket();
-        am = (AlarmManager) VoiceService.this.getSystemService(Context.ALARM_SERVICE);
+        alarmManager = (AlarmManager) VoiceService.this.getSystemService(Context.ALARM_SERVICE);
         alarmReceiver = new AlarmReceiver();
         registerReceiver(alarmReceiver, new IntentFilter("smartlink.zhy.jyfridge.RING"));
 
@@ -199,9 +197,9 @@ public class VoiceService extends AccessibilityService {
                 Intent intent = new Intent();
                 intent.setAction("smartlink.zhy.jyfridge.RING");
                 intent.putExtra("time", remindBean.getTriggerAtMillis());
-                PendingIntent pendingIntent = PendingIntent.getBroadcast(VoiceService.this, requestCode, intent, 0);
-                assert am != null;
-                am.set(AlarmManager.RTC_WAKEUP, remindBean.getTriggerAtMillis(), pendingIntent);
+                PendingIntent pendingIntent = PendingIntent.getBroadcast(VoiceService.this, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                assert alarmManager != null;
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, remindBean.getTriggerAtMillis(), pendingIntent);
                 requestCode++;
             }
             L.e(TAG, "还有没有过期的日程提醒");
@@ -700,6 +698,8 @@ public class VoiceService extends AccessibilityService {
                             TTS(entity);
                             break;
                         case 3://日程提醒
+                            long againTime = entity.getTime_start() + 300000;
+
                             RemindBean remindBean = new RemindBean();
                             remindBean.setTriggerAtMillis(entity.getTime_start());
                             remindBean.setMsg(entity.getDetails());
@@ -712,13 +712,31 @@ public class VoiceService extends AccessibilityService {
                             Intent intent = new Intent();
                             intent.setAction("smartlink.zhy.jyfridge.RING");
                             intent.putExtra("time", entity.getTime_start());
-                            PendingIntent pendingIntent = PendingIntent.getBroadcast(VoiceService.this, requestCode, intent, 0);
-                            assert am != null;
-                            am.set(AlarmManager.RTC_WAKEUP, entity.getTime_start(), pendingIntent);
+                            PendingIntent pi = PendingIntent.getBroadcast(VoiceService.this, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                            assert alarmManager != null;
+                            alarmManager.setExact(AlarmManager.RTC_WAKEUP, entity.getTime_start(), pi);
                             requestCode++;
-                            if ("".equals(entity.getDetails())) {
+                            if (!"".equals(entity.getDetails())) {
                                 TTS(entity);
                             }
+
+                            RemindBean remindBean5 = new RemindBean();
+                            remindBean5.setTriggerAtMillis(againTime);
+                            remindBean5.setMsg(entity.getDetails());
+                            remindBean5.save();
+                            if (remindBean5.save()) {
+                                L.e(TAG, "Connector   存储成功");
+                            } else {
+                                L.e(TAG, "Connector   存储失败");
+                            }
+                            Intent intent5 = new Intent();
+                            intent5.setAction("smartlink.zhy.jyfridge.RING");
+                            intent5.putExtra("time", againTime);
+                            PendingIntent pi5 = PendingIntent.getBroadcast(VoiceService.this, requestCode, intent5, PendingIntent.FLAG_UPDATE_CURRENT);
+                            assert alarmManager != null;
+                            alarmManager.setExact(AlarmManager.RTC_WAKEUP, againTime, pi5);
+                            requestCode++;
+
                             break;
                         case 4://获取睡前故事url
                             TTS(entity);
@@ -1329,7 +1347,7 @@ public class VoiceService extends AccessibilityService {
         @Override
         public void onReceive(Context context, Intent intent) {
             if ("smartlink.zhy.jyfridge.RING".equals(intent.getAction())) {
-                L.e(TAG, "AlarmReceiver   时间到了  ");
+                L.e(TAG, "AlarmReceiver   onReceive 时间到了  ");
 
                 long time = intent.getLongExtra("time", 0);
 
@@ -1342,7 +1360,6 @@ public class VoiceService extends AccessibilityService {
                         stringBuffer = stringBuffer.append(r.getMsg()).append(",");
                     }
                     mTts.startSpeaking(stringBuffer.toString(), mTtsListener);
-                    L.e(TAG, "  stringBuffer  " + stringBuffer);
 
                     DataSupport.deleteAll(RemindBean.class, "triggerAtMillis=?", String.valueOf(time));
                 }

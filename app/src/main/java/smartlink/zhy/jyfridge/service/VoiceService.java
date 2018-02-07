@@ -116,10 +116,10 @@ public class VoiceService extends AccessibilityService {
     int MAX_SIZE = 100;
     byte[] rbuf = new byte[MAX_SIZE];
 
-    Handler writeHandler = null;
-    Handler readHandler = null;
-    Handler redHandler = null;
-    Handler resultHandler = null;
+    Handler writeHandler = new Handler();
+    Handler readHandler = new Handler();
+    Handler redHandler = new Handler();
+    Handler resultHandler = new Handler();
 
     Runnable redUpdate = null;
     Runnable writeUpdate = null;
@@ -274,9 +274,10 @@ public class VoiceService extends AccessibilityService {
                 showTip("播放完成");
                 mIatResults.clear();
 
-                if (isNearOverDue) {
+                if (isNearOverDue == 1) {
                     Recommend();
-                    isNearOverDue = false;
+                } else if (isNearOverDue == 2) {
+                    MusicPlayer.getPlayer().resume();
                 }
 
                 // 设置参数
@@ -327,7 +328,7 @@ public class VoiceService extends AccessibilityService {
     // 播放进度
 //    private int mPercentForPlaying = 0;
 
-    private boolean isNearOverDue = false;
+    private int isNearOverDue = 0;
 
     /**
      * 讯飞唤醒监听
@@ -597,7 +598,7 @@ public class VoiceService extends AccessibilityService {
                             mIat.stopListening();
                         }
                         L.e(TAG, "NearOverDue  entity.getText() " + entity.getText());
-                        isNearOverDue = true;
+                        isNearOverDue = 1;
                         if (MusicPlayer.getPlayer().isPlaying()) {
                             MusicPlayer.getPlayer().pause();
                         }
@@ -635,8 +636,11 @@ public class VoiceService extends AccessibilityService {
                         if (mIat.isListening()) {
                             mIat.stopListening();
                         }
+                        if (MusicPlayer.getPlayer().isPlaying()) {
+                            MusicPlayer.getPlayer().pause();
+                            isNearOverDue = 2;
+                        }
                         mTts.startSpeaking(entity.getText(), mTtsListener);
-                        MusicPlayer.getPlayer().resume();
                     }
                 }
             }
@@ -1009,7 +1013,6 @@ public class VoiceService extends AccessibilityService {
             fid = mSignwayManager.openUart("dev/ttyS2", 9600);
         }
 
-        writeHandler = new Handler();
         writeUpdate = new Runnable() {
             @Override
             public void run() {
@@ -1019,8 +1022,6 @@ public class VoiceService extends AccessibilityService {
             }
         };
         writeHandler.post(writeUpdate);
-
-        readHandler = new Handler();
         readUpdate = new Runnable() {
             @Override
             public void run() {
@@ -1033,7 +1034,6 @@ public class VoiceService extends AccessibilityService {
         readHandler.post(readUpdate);
 
         /*P24 红外线感应打开关闭*/
-        redHandler = new Handler();
         redUpdate = new Runnable() {
             @Override
             public void run() {
@@ -1184,25 +1184,7 @@ public class VoiceService extends AccessibilityService {
                 compareData = sendData;
             }
 
-            if ((sendData[4] & 0x01) != 0 && (sendData[4] & 0x02) != 0 && (sendData[4] & 0x04) != 0) {
-                L.e(TAG, "冷藏室门 变温门 冷冻门 开了");
-            } else if ((sendData[4] & 0x01) == 0 && (sendData[4] & 0x02) == 0 && (sendData[4] & 0x04) == 0) {
-                L.e(TAG, "冷藏室门 变温门 冷冻门 关了");
-            } else if ((sendData[4] & 0x01) != 0 && (sendData[4] & 0x02) != 0) {
-                L.e(TAG, "冷藏室门 变温门 开了");
-            } else if ((sendData[4] & 0x01) == 0 && (sendData[4] & 0x02) == 0) {
-                L.e(TAG, "冷藏室门 变温门 关了");
-            } else if ((sendData[4] & 0x01) != 0 && (sendData[4] & 0x04) != 0) {
-                L.e(TAG, "冷藏室门 冷冻门 开了");
-            } else if ((sendData[4] & 0x01) == 0 && (sendData[4] & 0x04) == 0) {
-                L.e(TAG, "冷藏室门 冷冻门 关了");
-            } else if ((sendData[4] & 0x02) != 0 && (sendData[4] & 0x04) != 0) {
-                L.e(TAG, "变温门 冷冻门 开了");
-            } else if ((sendData[4] & 0x02) == 0 && (sendData[4] & 0x04) == 0) {
-                L.e(TAG, "变温门 冷冻门 关了");
-            }
-
-            if ((sendData[4] & 0x01) != 0) {
+            if ((sendData[4] & 0x01) == 0) {
                 if (!isOpenDoor1) {
                     L.e(TAG, "冷藏室门   开了");
                     if (!mTts.isSpeaking() && !mIat.isListening()) {
@@ -1219,7 +1201,7 @@ public class VoiceService extends AccessibilityService {
                         OpenDoorOne = 0;
                     }
                 }
-            } else if ((sendData[4] & 0x01) == 0) {
+            } else if ((sendData[4] & 0x01) != 0) {
                 if (isOpenDoor1) {
                     L.e(TAG, "冷藏室门   ------------关了");
                     CloseDoor();
@@ -1229,7 +1211,9 @@ public class VoiceService extends AccessibilityService {
                 } else {
                     L.e(TAG, "冷藏室门  关了");
                 }
-            } else if ((sendData[4] & 0x02) != 0) {
+            }
+
+            if ((sendData[4] & 0x02) != 0) {
                 if (!isOpenDoor8) {
                     L.e(TAG, "变温门   开了");
                     if (!mTts.isSpeaking() && !mIat.isListening()) {
@@ -1255,7 +1239,9 @@ public class VoiceService extends AccessibilityService {
                 } else {
                     L.e(TAG, "变温门  关了");
                 }
-            } else if ((sendData[4] & 0x04) != 0) {
+            }
+
+            if ((sendData[4] & 0x04) != 0) {
                 if (!isOpenDoor2) {
                     L.e(TAG, "冷冻门   开了");
                     if (!mTts.isSpeaking() && !mIat.isListening()) {
@@ -1553,7 +1539,6 @@ public class VoiceService extends AccessibilityService {
             @Override
             public void onSuccess(Object o) {
                 L.e(TAG, "open  onSuccess" + o.toString());
-                resultHandler = new Handler();
                 resultUpdate = new Runnable() {
                     @Override
                     public void run() {
@@ -1606,7 +1591,10 @@ public class VoiceService extends AccessibilityService {
 //                closeHandler.sendEmptyMessage(100);
             }
         });
-        resultHandler.removeCallbacks(resultUpdate);
+
+        if (resultUpdate != null) {
+            resultHandler.removeCallbacks(resultUpdate);
+        }
     }
 
     private void getResult() {

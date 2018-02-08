@@ -598,9 +598,6 @@ public class VoiceService extends AccessibilityService {
                             mIat.stopListening();
                         }
                         L.e(TAG, "NearOverDue  entity.getText() " + entity.getText());
-                        if (MusicPlayer.getPlayer().isPlaying()) {
-                            MusicPlayer.getPlayer().pause();
-                        }
                         Recommend(entity.getText());
                     }
                 }

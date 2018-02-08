@@ -127,6 +127,8 @@ public class VoiceService extends AccessibilityService {
     Runnable resultUpdate = null;
 
     private boolean isRed = false;
+    private boolean isMorning = false;
+    private boolean isEvening = false;
 
     int readLength;
     int fid = -1;
@@ -274,9 +276,7 @@ public class VoiceService extends AccessibilityService {
                 showTip("播放完成");
                 mIatResults.clear();
 
-                if (isNearOverDue == 1) {
-                    Recommend();
-                } else if (isNearOverDue == 2) {
+                if (isNearOverDue == 2) {
                     MusicPlayer.getPlayer().resume();
                 }
 
@@ -598,11 +598,10 @@ public class VoiceService extends AccessibilityService {
                             mIat.stopListening();
                         }
                         L.e(TAG, "NearOverDue  entity.getText() " + entity.getText());
-                        isNearOverDue = 1;
                         if (MusicPlayer.getPlayer().isPlaying()) {
                             MusicPlayer.getPlayer().pause();
                         }
-                        mTts.startSpeaking("冰箱里的" + entity.getText() + "快过期了，请尽快食用", mTtsListener);
+                        Recommend(entity.getText());
                     }
                 }
             }
@@ -619,7 +618,7 @@ public class VoiceService extends AccessibilityService {
         });
     }
 
-    private void Recommend() {
+    private void Recommend(final String msg) {
         BaseOkHttpClient.newBuilder()
                 .addParam("Ingredients.refrigeratorId", ConstantPool.FridgeId)
                 .get().url(ConstantPool.Recommend)
@@ -640,7 +639,7 @@ public class VoiceService extends AccessibilityService {
                             MusicPlayer.getPlayer().pause();
                             isNearOverDue = 2;
                         }
-                        mTts.startSpeaking(entity.getText(), mTtsListener);
+                        mTts.startSpeaking("冰箱里的" + msg + "快过期了，请尽快食用" + " , " + entity.getText(), null);
                     }
                 }
             }
@@ -1042,15 +1041,40 @@ public class VoiceService extends AccessibilityService {
                         SignwayManager.GPIOGroup.GPIO0, SignwayManager.GPIONum.PD2);
                 int state = mSignwayManager.getGpioStatus(SignwayManager.ExterGPIOPIN.SWH5528_J9_PIN24);
                 L.e(TAG, "  state  : " + state);
-                if (getCurrentTime()) {
+
+                Calendar calendar = Calendar.getInstance();
+                int hour = calendar.get(Calendar.HOUR_OF_DAY);
+
+                if (hour >= 6 && hour < 17 && !isMorning) {//早上提醒
                     if (state == 1 && !isRed) {
-                        NearOverDue();
                         isRed = true;
+                        isMorning = true;
+                        isEvening = false;
+                        NearOverDue();
+                    } else if (state == 0) {
+                        isRed = false;
+                    }
+                } else if (hour >= 17 && hour <= 22 && !isEvening) {//晚上提醒
+                    if (state == 1 && !isRed) {
+                        isRed = true;
+                        isEvening = true;
+                        isMorning = false;
+                        NearOverDue();
                     } else if (state == 0) {
                         isRed = false;
                     }
                 }
-                redHandler.postDelayed(redUpdate, 500);
+
+
+//                if (getCurrentTime()) {
+//                    if (state == 1 && !isRed) {
+//                        isRed = true;
+//                        NearOverDue();
+//                    } else if (state == 0) {
+//                        isRed = false;
+//                    }
+//                }
+                redHandler.postDelayed(redUpdate, 1000);
             }
         };
         redHandler.post(redUpdate);
@@ -1062,12 +1086,7 @@ public class VoiceService extends AccessibilityService {
     private boolean getCurrentTime() {
         Calendar calendar = Calendar.getInstance();
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
-        if (hour >= 6 && hour < 17) {
-            return true;
-        } else if (hour >= 17 && hour <= 22) {
-            return true;
-        }
-        return false;
+        return hour >= 6 && hour < 17 || hour >= 17 && hour <= 22;
     }
 
     private void sendByte() {

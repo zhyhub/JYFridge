@@ -276,8 +276,10 @@ public class VoiceService extends AccessibilityService {
                 showTip("播放完成");
                 mIatResults.clear();
 
-                if (isNearOverDue == 2) {
+                if (isNearOverDue) {
+                    isNearOverDue = false;
                     MusicPlayer.getPlayer().resume();
+                    L.e(TAG, "onCompleted  播放睡前故事恢复播放");
                 }
 
                 // 设置参数
@@ -328,7 +330,7 @@ public class VoiceService extends AccessibilityService {
     // 播放进度
 //    private int mPercentForPlaying = 0;
 
-    private int isNearOverDue = 0;
+    private boolean isNearOverDue = false;
 
     /**
      * 讯飞唤醒监听
@@ -422,7 +424,7 @@ public class VoiceService extends AccessibilityService {
             if (isPause) {
                 MusicPlayer.getPlayer().resume();
                 isPause = false;
-                L.e(TAG, "onCompleted  播放睡前故事恢复播放");
+                L.e(TAG, "RecognizerListener onError  播放睡前故事恢复播放");
             }
         }
 
@@ -434,7 +436,7 @@ public class VoiceService extends AccessibilityService {
             if (isPause) {
                 MusicPlayer.getPlayer().resume();
                 isPause = false;
-                L.e(TAG, "onCompleted  播放睡前故事恢复播放");
+                L.e(TAG, "RecognizerListener onEndOfSpeech  播放睡前故事恢复播放");
             }
             initSignWay23(false);
         }
@@ -634,9 +636,9 @@ public class VoiceService extends AccessibilityService {
                         }
                         if (MusicPlayer.getPlayer().isPlaying()) {
                             MusicPlayer.getPlayer().pause();
-                            isNearOverDue = 2;
+                            isNearOverDue = true;
                         }
-                        mTts.startSpeaking("冰箱里的" + msg + "快过期了，请尽快食用" + " , " + entity.getText(), null);
+                        mTts.startSpeaking("冰箱里的" + msg + "快过期了，请尽快食用" + " , " + entity.getText(), mTtsListener);
                     }
                 }
             }
@@ -982,13 +984,9 @@ public class VoiceService extends AccessibilityService {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                readTTyDevice();
+                readTTyDevice(entity);
             }
-        }, 500);
-
-        if (sendData != null && sendData[2] == entity.getData()[9] && sendData[5] == entity.getData()[3] && sendData[6] == entity.getData()[4] && sendData[7] == entity.getData()[5]) {
-            TTS(entity);
-        }
+        }, 1000);
     }
 
     /**
@@ -1013,8 +1011,8 @@ public class VoiceService extends AccessibilityService {
             @Override
             public void run() {
                 Log.e("TAG", "读");
-                readTTyDevice();
-                writeHandler.postDelayed(writeUpdate, 1000); //1秒后再调用
+                readTTyDevice(null);
+                writeHandler.postDelayed(writeUpdate, 500); //1秒后再调用
             }
         };
         writeHandler.post(writeUpdate);
@@ -1024,7 +1022,7 @@ public class VoiceService extends AccessibilityService {
                 Log.e("TAG", "写");
                 DATA_2 = ConstantPool.Data2_Running_State;
                 sendByte();
-                readHandler.postDelayed(readUpdate, 1000); //1秒后再调用
+                readHandler.postDelayed(readUpdate, 500); //1秒后再调用
             }
         };
         readHandler.post(readUpdate);
@@ -1134,7 +1132,7 @@ public class VoiceService extends AccessibilityService {
     /**
      * 读串口数据
      */
-    public void readTTyDevice() {
+    public void readTTyDevice(final BaseEntity entity) {
         if (fid < 0) {
             return;
         }
@@ -1149,7 +1147,7 @@ public class VoiceService extends AccessibilityService {
                     readLength = mSignwayManager.readUart(fid, rbuf, rbuf.length);
                     L.e(TAG, "  readLength  " + readLength + "   " + Arrays.toString(sendData));
                     if (readLength > 47) {
-                        setNewData(rbuf, readLength);
+                        setNewData(rbuf, readLength, entity);
                     }
                     isSet = false;
                 }
@@ -1168,7 +1166,9 @@ public class VoiceService extends AccessibilityService {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                mSignwayManager.writeUart(fid, buf, buf.length);
+                L.e(TAG, "writeTTyDevice   start");
+                int a = mSignwayManager.writeUart(fid, buf, buf.length);
+                L.e(TAG, "writeTTyDevice   end :  " + a);
                 isWrite = false;
             }
         }).start();
@@ -1177,7 +1177,7 @@ public class VoiceService extends AccessibilityService {
     /**
      * 获取最新的串口数据
      */
-    private void setNewData(byte[] newData, int readLength) {
+    private void setNewData(byte[] newData, int readLength, BaseEntity entity) {
 
         if (newData != null && readLength > 0) {
             int i = 0;
@@ -1212,8 +1212,9 @@ public class VoiceService extends AccessibilityService {
                     L.e(TAG, "冷藏室门  ------------开了");
                     OpenDoorOne++;
                     L.e(TAG, "OpenDoorOne  " + OpenDoorOne);
-                    if (OpenDoorOne >= 30 && !One) {
+                    if (OpenDoorOne >= 180 && !One) {
                         updateFridgeInfo(2);
+                        mTts.startSpeaking("冷藏室门没关", null);
                         OpenDoorOne = 0;
                     }
                 }
@@ -1240,15 +1241,16 @@ public class VoiceService extends AccessibilityService {
                     L.e(TAG, "变温门   ---------------开了");
                     OpenDoorEight++;
                     L.e(TAG, "OpenDoorEight  " + OpenDoorEight);
-                    if (OpenDoorEight >= 30 && !Eight) {
+                    if (OpenDoorEight >= 180 && !Eight) {
                         updateFridgeInfo(3);
+                        mTts.startSpeaking("变温室门没关", null);
                         OpenDoorEight = 0;
                     }
                 }
             } else if ((sendData[4] & 0x02) == 0) {
                 if (isOpenDoor8) {
                     L.e(TAG, "变温门   ------------关了");
-                    CloseDoor();
+//                    CloseDoor();
                     isOpenDoor8 = false;
                     Eight = false;
                     isCompared = false;
@@ -1268,15 +1270,16 @@ public class VoiceService extends AccessibilityService {
                     L.e(TAG, "冷冻门   --------------开了");
                     OpenDoorTwo++;
                     L.e(TAG, "OpenDoorTwo  " + OpenDoorTwo);
-                    if (OpenDoorTwo >= 30 && !Two) {
+                    if (OpenDoorTwo >= 180 && !Two) {
                         updateFridgeInfo(4);
+                        mTts.startSpeaking("冷冻室门没关", null);
                         OpenDoorTwo = 0;
                     }
                 }
             } else if ((sendData[4] & 0x04) == 0) {
                 if (isOpenDoor2) {
                     L.e(TAG, "冷冻门   ------------关了");
-                    CloseDoor();
+//                    CloseDoor();
                     isOpenDoor2 = false;
                     Two = false;
                     isCompared = false;
@@ -1285,6 +1288,13 @@ public class VoiceService extends AccessibilityService {
                 }
             }
             compareByte(sendData, compareData);
+
+            if (entity != null && sendData != null) {
+                L.e(TAG, " getData  " + Arrays.toString(entity.getData()) + " sendData " + Arrays.toString(sendData));
+                if (entity.getData()[9] == sendData[2] || entity.getData()[3] == sendData[5] || entity.getData()[4] == sendData[6] || entity.getData()[5] == sendData[7]) {
+                    TTS(entity);
+                }
+            }
         }
     }
 

@@ -14,6 +14,7 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -76,6 +77,9 @@ public class VoiceService extends AccessibilityService {
 
     private static String TAG = VoiceService.class.getSimpleName();
 
+    private static final int MSG_UPDATE = 0x110;
+    private static final int MSG1_UPDATE = 0x120;
+    private static final int MSG2_UPDATE = 0x130;
     //时间
     boolean isFirst = false;
     boolean isSecond = false;
@@ -512,12 +516,12 @@ public class VoiceService extends AccessibilityService {
         if (mEngineType.equals(SpeechConstant.TYPE_CLOUD)) {
             mTts.setParameter(SpeechConstant.ENGINE_TYPE, SpeechConstant.TYPE_CLOUD);
             // 设置在线合成发音人
-            String voicer = "nannan";
+            String voicer = "xiaoyan";
             mTts.setParameter(SpeechConstant.VOICE_NAME, voicer);
             //设置合成语速
-            mTts.setParameter(SpeechConstant.SPEED, "80");
+            mTts.setParameter(SpeechConstant.SPEED, "50");
             //设置合成音调
-            mTts.setParameter(SpeechConstant.PITCH, "60");
+            mTts.setParameter(SpeechConstant.PITCH, "50");
             //设置合成音量
             mTts.setParameter(SpeechConstant.VOLUME, "100");
         } else {
@@ -986,7 +990,7 @@ public class VoiceService extends AccessibilityService {
             public void run() {
                 readTTyDevice(entity);
             }
-        }, 1000);
+        }, 500);
     }
 
     /**
@@ -1174,6 +1178,45 @@ public class VoiceService extends AccessibilityService {
         }).start();
     }
 
+    @SuppressLint("HandlerLeak")
+    private Handler doorHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            mTts.startSpeaking("冷藏室门没关", null);
+            if (OpenDoorOne == 0 && !One) {
+                doorHandler.removeMessages(MSG_UPDATE);
+            }else {
+                doorHandler.sendEmptyMessageDelayed(MSG_UPDATE, 3000);
+            }
+        }
+    };
+
+    @SuppressLint("HandlerLeak")
+    private Handler doorHandler4 = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            mTts.startSpeaking("变温室门没关", null);
+            if (OpenDoorEight == 0 && !Eight) {
+                doorHandler4.removeMessages(MSG1_UPDATE);
+            }else {
+                doorHandler4.sendEmptyMessageDelayed(MSG1_UPDATE, 3000);
+            }
+        }
+    };
+
+    @SuppressLint("HandlerLeak")
+    private Handler doorHandler8 = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            mTts.startSpeaking("冷冻室门没关", null);
+            if (OpenDoorTwo == 0 && !Two) {
+                doorHandler8.removeMessages(MSG2_UPDATE);
+            }else {
+                doorHandler8.sendEmptyMessageDelayed(MSG2_UPDATE, 3000);
+            }
+        }
+    };
+
     /**
      * 获取最新的串口数据
      */
@@ -1214,13 +1257,13 @@ public class VoiceService extends AccessibilityService {
                     L.e(TAG, "OpenDoorOne  " + OpenDoorOne);
                     if (OpenDoorOne >= 180 && !One) {
                         updateFridgeInfo(2);
-                        mTts.startSpeaking("冷藏室门没关", null);
-                        OpenDoorOne = 0;
+                        doorHandler.sendEmptyMessage(MSG_UPDATE);
                     }
                 }
             } else if ((sendData[4] & 0x01) != 0) {
                 if (isOpenDoor1) {
                     L.e(TAG, "冷藏室门   ------------关了");
+                    OpenDoorOne = 0;
                     CloseDoor();
                     isOpenDoor1 = false;
                     One = false;
@@ -1243,16 +1286,15 @@ public class VoiceService extends AccessibilityService {
                     L.e(TAG, "OpenDoorEight  " + OpenDoorEight);
                     if (OpenDoorEight >= 180 && !Eight) {
                         updateFridgeInfo(3);
-                        mTts.startSpeaking("变温室门没关", null);
-                        OpenDoorEight = 0;
+                        doorHandler4.sendEmptyMessage(MSG1_UPDATE);
                     }
                 }
             } else if ((sendData[4] & 0x02) == 0) {
                 if (isOpenDoor8) {
                     L.e(TAG, "变温门   ------------关了");
-//                    CloseDoor();
                     isOpenDoor8 = false;
                     Eight = false;
+                    OpenDoorEight = 0;
                     isCompared = false;
                 } else {
                     L.e(TAG, "变温门  关了");
@@ -1272,17 +1314,16 @@ public class VoiceService extends AccessibilityService {
                     L.e(TAG, "OpenDoorTwo  " + OpenDoorTwo);
                     if (OpenDoorTwo >= 180 && !Two) {
                         updateFridgeInfo(4);
-                        mTts.startSpeaking("冷冻室门没关", null);
-                        OpenDoorTwo = 0;
+                        doorHandler8.sendEmptyMessage(MSG2_UPDATE);
                     }
                 }
             } else if ((sendData[4] & 0x04) == 0) {
                 if (isOpenDoor2) {
                     L.e(TAG, "冷冻门   ------------关了");
-//                    CloseDoor();
                     isOpenDoor2 = false;
                     Two = false;
                     isCompared = false;
+                    OpenDoorTwo = 0;
                 } else {
                     L.e(TAG, "冷冻门  关了");
                 }
@@ -1371,7 +1412,7 @@ public class VoiceService extends AccessibilityService {
                     for (RemindBean r : remindBeanList) {
                         stringBuffer = stringBuffer.append(r.getMsg()).append(",");
                     }
-                    mTts.startSpeaking(stringBuffer.toString(), mTtsListener);
+                    mTts.startSpeaking(stringBuffer.toString(), null);
 
                     DataSupport.deleteAll(RemindBean.class, "triggerAtMillis=?", String.valueOf(time));
                 }
